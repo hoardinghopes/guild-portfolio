@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bookmarks</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #e1e1e3;
+    background: #121214;
+    padding: 1rem;
+  }
+  .container {
+    max-width: 640px;
+    margin: 2.5rem auto;
+  }
+  h1 {
+    font-size: 1.625rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    margin-bottom: 1.5rem;
+    color: #f0f0f2;
+  }
+
+  /* --- Add form --- */
+  .form-card {
+    background: #1a1a1e;
+    border: 1px solid #2a2a2e;
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .form-toggle {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    width: 100%;
+    background: #1a1a1e;
+    border: 1px solid #2a2a2e;
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    color: #888;
+    font-size: .875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+    margin-bottom: 1.5rem;
+  }
+  .form-toggle:hover {
+    border-color: #3a3a3e;
+    color: #e1e1e3;
+  }
+  .form-toggle .plus {
+    font-size: 1.25rem;
+    font-weight: 300;
+    line-height: 1;
+    color: #666;
+    transition: transform .2s;
+  }
+  .form-toggle.open .plus { transform: rotate(45deg); }
+  .form-body { display: none; }
+  .form-card { display: none; }
+  .form-body.open { display: block; }
+  .form-card.open { display: block; }
+  .form-row { margin-bottom: .75rem; }
+  .form-row:last-of-type { margin-bottom: 0; }
+  label {
+    display: block;
+    font-size: .75rem;
+    font-weight: 600;
+    margin-bottom: .3rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  input[type="url"],
+  input[type="text"],
+  textarea {
+    width: 100%;
+    padding: .55rem .7rem;
+    font-size: .875rem;
+    border: 1px solid #2a2a2e;
+    border-radius: 7px;
+    outline: none;
+    background: #0f0f11;
+    color: #e1e1e3;
+    font-family: inherit;
+    transition: border-color .15s;
+  }
+  textarea { resize: vertical; min-height: 3.5rem; }
+  input:focus, textarea:focus { border-color: #555; }
+  .btn-primary {
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    padding: .55rem 1.1rem;
+    font-size: .875rem;
+    font-weight: 600;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background .15s;
+    margin-top: .5rem;
+  }
+  .btn-primary:hover { background: #2563eb; }
+
+  /* --- Search --- */
+  #search {
+    width: 100%;
+    margin-block-start: 2rem;
+    padding: .6rem .75rem .6rem 2.4rem;
+    font-size: .875rem;
+    border: 1px solid #2a2a2e;
+    border-radius: 9px;
+    outline: none;
+    background: #1a1a1e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") .7rem 50% no-repeat;
+    color: #e1e1e3;
+    transition: border-color .15s;
+  }
+  #search:focus { border-color: #555; }
+  #search::placeholder { color: #555; }
+
+  /* --- Filter bar --- */
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .375rem;
+    margin: .75rem 0 1rem;
+  }
+  .filter-pill {
+    font-size: .75rem;
+    font-weight: 500;
+    background: #1a1a1e;
+    color: #888;
+    padding: .25rem .7rem;
+    border-radius: 999px;
+    border: 1px solid #2a2a2e;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .filter-pill:hover { border-color: #444; color: #e1e1e3; }
+  .filter-pill.active {
+    background: #3b82f6;
+    color: #fff;
+    border-color: #3b82f6;
+  }
+
+  /* --- Bookmark list --- */
+  #list { position: relative; margin-block-start: 2rem}
+  .bookmark {
+    background: #1a1a1e;
+    border: 1px solid #2a2a2e;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: .625rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: .75rem;
+    animation: fadeIn .2s ease both;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .bookmark-body { flex: 1; min-width: 0; }
+  .bookmark-title {
+    font-size: .9375rem;
+    font-weight: 600;
+    color: #93b4f8;
+    text-decoration: none;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bookmark-title:hover { color: #b4ccff; }
+  .bookmark-domain {
+    font-size: .6875rem;
+    color: #555;
+    margin-top: .125rem;
+  }
+  .bookmark-note {
+    font-size: .8125rem;
+    color: #999;
+    margin-top: .4rem;
+    line-height: 1.45;
+  }
+  .bookmark-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .375rem;
+    margin-top: .5rem;
+  }
+  .tag {
+    font-size: .6875rem;
+    font-weight: 500;
+    background: #1e1e24;
+    color: #999;
+    padding: .125rem .5rem;
+    border-radius: 999px;
+    border: 1px solid #2a2a2e;
+  }
+  .filter-tag { cursor: pointer; transition: background .15s, border-color .15s; }
+  .filter-tag:hover { background: #2a2a30; border-color: #444; }
+
+  /* --- Actions --- */
+  .bookmark-actions {
+    display: flex;
+    gap: .125rem;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .bookmark:hover .bookmark-actions { opacity: 1; }
+  .icon-btn {
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: .125rem .25rem;
+    line-height: 1;
+    transition: color .15s;
+  }
+  .icon-btn:hover { color: #e1e1e3; }
+  .icon-btn.delete:hover { color: #f87171; }
+
+  /* --- Edit form --- */
+  .edit-form { width: 100%; }
+  .edit-form .form-row { margin-bottom: .625rem; }
+  .edit-form .form-row:last-child { margin-bottom: 0; }
+  .edit-form label {
+    font-size: .6875rem;
+    margin-bottom: .1rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .edit-form input,
+  .edit-form textarea {
+    font-size: .8125rem;
+    padding: .4rem .55rem;
+    background: #0f0f11;
+    color: #e1e1e3;
+    border-color: #2a2a2e;
+  }
+  .edit-form .btn-row {
+    display: flex;
+    gap: .5rem;
+    margin-top: .5rem;
+  }
+  .edit-form .btn-row button { font-size: .8125rem; padding: .4rem .75rem; }
+  .btn-secondary {
+    background: #2a2a2e;
+    color: #bbb;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-secondary:hover { background: #3a3a3e; }
+
+  /* --- Empty state --- */
+  .empty {
+    text-align: center;
+    color: #555;
+    padding: 3.5rem 0;
+    font-size: .875rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Bookmarks</h1>
+
+  <button class="form-toggle" id="formToggle">
+    <span class="plus">+</span>
+    <span>Add bookmark</span>
+  </button>
+
+  <form class="form-card" id="form">
+    <div class="form-body" id="formBody">
+      <div class="form-row">
+        <label for="url">URL</label>
+        <input type="url" id="url" placeholder="https://" required>
+      </div>
+      <div class="form-row">
+        <label for="title">Title</label>
+        <input type="text" id="title" placeholder="Page title" required>
+      </div>
+      <div class="form-row">
+        <label for="notes">Notes</label>
+        <textarea id="notes" placeholder="Brief description"></textarea>
+      </div>
+      <div class="form-row">
+        <label for="tags">Tags</label>
+        <input type="text" id="tags" placeholder="css, layout, tutorial">
+      </div>
+      <button class="btn-primary" type="submit">Save</button>
+    </div>
+  </form>
+
+  <input type="text" id="search" placeholder="Search bookmarks..." autocomplete="off">
+  <div class="filter-bar" id="filterBar"></div>
+  <div id="list"></div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'bookmarks';
+  let currentFilter = '';
+  let searchQuery = '';
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function save(bookmarks) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarks));
+  }
+
+  function domain(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ''); }
+    catch { return ''; }
+  }
+
+  function render() {
+    const allBookmarks = load();
+    const list = document.getElementById('list');
+    const filterBar = document.getElementById('filterBar');
+
+    const uniqueTags = [...new Set(allBookmarks.flatMap(b => b.tags || []))].sort();
+    const tagFiltered = currentFilter
+      ? allBookmarks.filter(b => (b.tags || []).includes(currentFilter))
+      : allBookmarks;
+    const q = searchQuery.toLowerCase();
+    const filtered = q
+      ? tagFiltered.filter(b => b.title.toLowerCase().includes(q) || (b.notes || '').toLowerCase().includes(q))
+      : tagFiltered;
+
+    if (uniqueTags.length) {
+      filterBar.innerHTML = `<button class="filter-pill${currentFilter === '' ? ' active' : ''}" data-filter="">All</button>`
+        + uniqueTags.map(t => `<button class="filter-pill${currentFilter === t ? ' active' : ''}" data-filter="${escapeAttr(t)}">${escapeHtml(t)}</button>`).join('');
+      filterBar.querySelectorAll('.filter-pill').forEach(btn => {
+        btn.addEventListener('click', () => { currentFilter = btn.dataset.filter; render(); });
+      });
+    } else {
+      filterBar.innerHTML = '';
+    }
+
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="empty">No bookmarks yet</div>';
+      return;
+    }
+    list.innerHTML = filtered.map(b => `
+      <div class="bookmark" data-id="${b.id}">
+        <div class="bookmark-body">
+          <a class="bookmark-title" href="${escapeAttr(b.url)}" target="_blank" rel="noopener">${escapeHtml(b.title)}</a>
+          <div class="bookmark-domain">${escapeHtml(domain(b.url))}</div>
+          ${b.notes ? `<div class="bookmark-note">${escapeHtml(b.notes)}</div>` : ''}
+          ${b.tags && b.tags.length ? `<div class="bookmark-tags">${b.tags.map(t => `<span class="tag filter-tag" data-filter="${escapeAttr(t)}">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+        </div>
+        <div class="bookmark-actions">
+          <button class="icon-btn edit-btn" title="Edit">&#9998;</button>
+          <button class="icon-btn delete" title="Delete">&times;</button>
+        </div>
+      </div>
+    `).join('');
+    list.querySelectorAll('.filter-tag').forEach(el => {
+      el.addEventListener('click', () => { currentFilter = el.dataset.filter; render(); });
+    });
+    list.querySelectorAll('.icon-btn.delete').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!confirm('Delete this bookmark?')) return;
+        const id = btn.closest('.bookmark').dataset.id;
+        save(load().filter(b => b.id !== id));
+        render();
+      });
+    });
+    list.querySelectorAll('.icon-btn.edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => startEdit(btn.closest('.bookmark').dataset.id));
+    });
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function escapeAttr(s) {
+    return s.replace(/"/g, '&quot;').replace(/&/g, '&amp;');
+  }
+
+  function startEdit(id) {
+    const bookmark = load().find(b => b.id === id);
+    if (!bookmark) return;
+    const card = document.querySelector(`.bookmark[data-id="${id}"]`);
+    card.innerHTML = `
+      <form class="edit-form" onsubmit="return false;">
+        <div class="form-row">
+          <label for="edit-url-${id}">URL</label>
+          <input type="url" id="edit-url-${id}" value="${escapeAttr(bookmark.url)}" required>
+        </div>
+        <div class="form-row">
+          <label for="edit-title-${id}">Title</label>
+          <input type="text" id="edit-title-${id}" value="${escapeAttr(bookmark.title)}" required>
+        </div>
+        <div class="form-row">
+          <label for="edit-notes-${id}">Notes</label>
+          <textarea id="edit-notes-${id}">${escapeHtml(bookmark.notes || '')}</textarea>
+        </div>
+        <div class="form-row">
+          <label for="edit-tags-${id}">Tags</label>
+          <input type="text" id="edit-tags-${id}" value="${escapeAttr((bookmark.tags || []).join(', '))}">
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" type="submit">Save</button>
+          <button type="button" class="btn-secondary cancel-btn">Cancel</button>
+        </div>
+      </form>
+    `;
+    card.querySelector('form').addEventListener('submit', e => { e.preventDefault(); saveEdit(id); });
+    card.querySelector('.cancel-btn').addEventListener('click', () => render());
+  }
+
+  function saveEdit(id) {
+    const bookmarks = load();
+    const idx = bookmarks.findIndex(b => b.id === id);
+    if (idx === -1) return;
+    bookmarks[idx] = {
+      id,
+      url: document.getElementById(`edit-url-${id}`).value.trim(),
+      title: document.getElementById(`edit-title-${id}`).value.trim(),
+      notes: document.getElementById(`edit-notes-${id}`).value.trim(),
+      tags: document.getElementById(`edit-tags-${id}`).value.trim().split(',').map(t => t.trim()).filter(t => t)
+    };
+    if (!bookmarks[idx].url || !bookmarks[idx].title) return;
+    save(bookmarks);
+    render();
+  }
+
+  /* --- Form collapse --- */
+  const formToggle = document.getElementById('formToggle');
+  const formBody = document.getElementById('formBody');
+  const f = document.getElementById('form');
+  formToggle.addEventListener('click', () => {
+    f.classList.toggle('open');
+    formBody.classList.toggle('open');
+    formToggle.classList.toggle('open');
+  });
+
+  /* --- Form submit --- */
+  document.getElementById('form').addEventListener('submit', e => {
+    e.preventDefault();
+    const url = document.getElementById('url').value.trim();
+    const title = document.getElementById('title').value.trim();
+    if (!url || !title) return;
+    const notes = document.getElementById('notes').value.trim();
+    const tags = document.getElementById('tags').value.trim().split(',').map(t => t.trim()).filter(t => t);
+    const bookmarks = load();
+    bookmarks.unshift({ id: crypto.randomUUID(), url, title, notes, tags });
+    save(bookmarks);
+    document.getElementById('form').reset();
+    formBody.classList.remove('open');
+    f.classList.remove('open');
+    formToggle.classList.remove('open');
+    render();
+  });
+
+  document.getElementById('search').addEventListener('input', e => {
+    searchQuery = e.target.value;
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
