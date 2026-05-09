@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reading Tracker</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #252525;
+    --border: #333;
+    --text: #e0e0e0;
+    --text-muted: #888;
+    --accent: #5b9aff;
+    --accent-hover: #7bafff;
+    --star: #f5c518;
+    --danger: #e55;
+    --radius: 8px;
+  }
+  [data-theme="light"] {
+    --bg: #f5f5f5;
+    --surface: #fff;
+    --surface2: #eee;
+    --border: #ddd;
+    --text: #222;
+    --text-muted: #888;
+    --accent: #3b7bdd;
+    --accent-hover: #2a6bc9;
+    --star: #e5a800;
+    --danger: #c33;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 16px;
+    min-width: 320px;
+    transition: background .2s, color .2s;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  h1 { font-size: 1.4rem; font-weight: 700; }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+
+  .btn {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: .9rem;
+    transition: background .15s;
+  }
+  .btn:hover { background: var(--border); }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-icon {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    cursor: pointer;
+    padding: 6px 10px;
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: background .15s;
+  }
+  .btn-icon:hover { background: var(--surface2); }
+  .btn-sm { padding: 4px 10px; font-size: .8rem; }
+
+  .add-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .add-form.open { display: block; }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .form-row.full { grid-template-columns: 1fr; }
+  .form-row.three { grid-template-columns: 1fr 1fr auto; }
+
+  label { font-size: .8rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px; }
+  input, textarea, select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: .9rem;
+    font-family: inherit;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+
+  .checkbox-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .checkbox-row label { margin-bottom: 0; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .checkbox-row input[type="checkbox"] { width: auto; cursor: pointer; }
+
+  .star-select {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+  .star-select button {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0;
+    line-height: 1;
+    transition: color .1s;
+  }
+  .star-select button.active { color: var(--star); }
+
+  .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .search-wrap { flex: 1; min-width: 160px; }
+  .search-wrap input { width: 100%; }
+
+  .view-toggle { display: flex; gap: 0; }
+  .view-toggle .btn {
+    border-radius: 0;
+    font-size: .8rem;
+  }
+  .view-toggle .btn:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+  .view-toggle .btn:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+  .view-toggle .btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 16px;
+    color: var(--text-muted);
+  }
+
+  .book-list { display: flex; flex-direction: column; gap: 10px; }
+  .book-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    transition: background .15s;
+  }
+  .book-card.current { border-left: 3px solid var(--accent); }
+
+  .book-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .book-title { font-size: 1rem; font-weight: 700; }
+  .book-author { font-size: .85rem; color: var(--text-muted); }
+  .book-meta { font-size: .8rem; color: var(--text-muted); margin: 4px 0; }
+  .book-stars { color: var(--star); font-size: .9rem; letter-spacing: 2px; }
+  .book-review { font-size: .85rem; margin-top: 6px; color: var(--text); }
+  .book-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .tag {
+    background: var(--surface2);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: .75rem;
+    color: var(--text-muted);
+  }
+  .book-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+  .badge {
+    display: inline-block;
+    font-size: .7rem;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .badge-reading { background: var(--accent); color: #fff; }
+  .badge-finished { background: var(--surface2); color: var(--text-muted); }
+
+  .author-group { margin-bottom: 16px; }
+  .author-name {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    padding: 16px;
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h2 { margin-bottom: 12px; font-size: 1.1rem; }
+
+  @media (max-width: 480px) {
+    .form-row { grid-template-columns: 1fr; }
+    .form-row.three { grid-template-columns: 1fr; }
+    .toolbar { flex-direction: column; }
+    .search-wrap { min-width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Reading Tracker</h1>
+    <div class="header-actions">
+      <button class="btn-icon" id="themeToggle" title="Toggle dark/light mode" aria-label="Toggle theme">☀️</button>
+      <button class="btn btn-primary" id="showAddBtn">+ Book</button>
+    </div>
+  </header>
+
+  <form class="add-form" id="addForm">
+    <div class="form-row">
+      <div>
+        <label for="bookTitle">Title *</label>
+        <input type="text" id="bookTitle" required>
+      </div>
+      <div>
+        <label for="bookAuthor">Author *</label>
+        <input type="text" id="bookAuthor" required>
+      </div>
+    </div>
+    <div class="form-row full">
+      <div>
+        <label for="bookPublisher">Publisher</label>
+        <input type="text" id="bookPublisher">
+      </div>
+    </div>
+    <div class="form-row full">
+      <div>
+        <label for="bookTags">Tags (comma separated)</label>
+        <input type="text" id="bookTags" placeholder="fiction, sci-fi, philosophy">
+      </div>
+    </div>
+    <div class="form-row full">
+      <div>
+        <label for="bookReview">Review</label>
+        <textarea id="bookReview"></textarea>
+      </div>
+    </div>
+    <label>Rating</label>
+    <div class="star-select" id="starSelect">
+      <button type="button" data-star="1">★</button>
+      <button type="button" data-star="2">★</button>
+      <button type="button" data-star="3">★</button>
+      <button type="button" data-star="4">★</button>
+      <button type="button" data-star="5">★</button>
+    </div>
+    <div class="checkbox-row">
+      <label><input type="checkbox" id="bookReading"> Currently reading</label>
+      <label><input type="checkbox" id="bookFinished"> Finished reading</label>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn" id="cancelAddBtn">Cancel</button>
+      <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+  </form>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="Search books…">
+    </div>
+    <div class="view-toggle">
+      <button class="btn active" data-view="list">All Books</button>
+      <button class="btn" data-view="authors">By Author</button>
+    </div>
+  </div>
+
+  <div id="bookList"></div>
+</div>
+
+<script>
+let books = [];
+let editingId = null;
+let selectedRating = 0;
+let currentView = 'list';
+let searchQuery = '';
+
+const STORAGE_KEY = 'reading_tracker_books';
+const THEME_KEY = 'reading_tracker_theme';
+
+function loadBooks() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) books = JSON.parse(data);
+  } catch {}
+  books = books || [];
+}
+
+function saveBooks() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved === 'light' || saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+  updateThemeIcon();
+}
+
+function saveTheme(theme) {
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+function updateThemeIcon() {
+  const theme = document.documentElement.getAttribute('data-theme');
+  document.getElementById('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  saveTheme(next);
+  updateThemeIcon();
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function renderStars(rating) {
+  if (!rating) return '';
+  return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+}
+
+function renderBook(book) {
+  const isCurrent = book.reading;
+  const isFinished = book.finished;
+  return `
+    <div class="book-card${isCurrent ? ' current' : ''}" data-id="${book.id}">
+      <div class="book-header">
+        <div>
+          <div class="book-title">${escHtml(book.title)}</div>
+          <div class="book-author">${escHtml(book.author)}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          ${isCurrent ? '<span class="badge badge-reading">Reading</span>' : ''}
+          ${isFinished ? '<span class="badge badge-finished">Finished</span>' : ''}
+        </div>
+      </div>
+      ${book.publisher ? `<div class="book-meta">${escHtml(book.publisher)}</div>` : ''}
+      ${book.rating ? `<div class="book-stars">${renderStars(book.rating)}</div>` : ''}
+      ${book.review ? `<div class="book-review">${escHtml(book.review)}</div>` : ''}
+      ${book.tags && book.tags.length ? `<div class="book-tags">${book.tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join('')}</div>` : ''}
+      <div class="book-actions">
+        <button class="btn btn-sm" data-action="edit">Edit</button>
+        <button class="btn btn-sm" data-action="delete" style="color:var(--danger);">Delete</button>
+      </div>
+    </div>
+  `;
+}
+
+function escHtml(s) {
+  if (typeof s !== 'string') return s;
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function render() {
+  const container = document.getElementById('bookList');
+  let filtered = books;
+
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = books.filter(b =>
+      b.title.toLowerCase().includes(q) ||
+      b.author.toLowerCase().includes(q) ||
+      (b.publisher && b.publisher.toLowerCase().includes(q)) ||
+      (b.tags && b.tags.some(t => t.toLowerCase().includes(q)))
+    );
+  }
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state">${searchQuery ? 'No books match your search.' : 'No books yet. Click "+ Book" to add one.'}</div>`;
+    return;
+  }
+
+  if (currentView === 'authors') {
+    const grouped = {};
+    filtered.forEach(b => {
+      const key = b.author.trim().toLowerCase();
+      if (!grouped[key]) grouped[key] = { name: b.author, books: [] };
+      grouped[key].books.push(b);
+    });
+    const sorted = Object.values(grouped).sort((a, b) => a.name.localeCompare(b.name));
+    container.innerHTML = sorted.map(g => `
+      <div class="author-group">
+        <div class="author-name">${escHtml(g.name)} <span style="font-weight:400;font-size:.8rem;color:var(--text-muted);">(${g.books.length})</span></div>
+        <div class="book-list">${g.books.map(renderBook).join('')}</div>
+      </div>
+    `).join('');
+  } else {
+    const sorted = [...filtered].sort((a, b) => new Date(b.created) - new Date(a.created));
+    container.innerHTML = `<div class="book-list">${sorted.map(renderBook).join('')}</div>`;
+  }
+}
+
+function resetForm() {
+  document.getElementById('bookTitle').value = '';
+  document.getElementById('bookAuthor').value = '';
+  document.getElementById('bookPublisher').value = '';
+  document.getElementById('bookTags').value = '';
+  document.getElementById('bookReview').value = '';
+  document.getElementById('bookReading').checked = false;
+  document.getElementById('bookFinished').checked = false;
+  selectedRating = 0;
+  document.querySelectorAll('#starSelect button').forEach(b => b.classList.remove('active'));
+  editingId = null;
+  document.getElementById('addForm').classList.remove('open');
+}
+
+function openForm(book) {
+  if (book) {
+    document.getElementById('bookTitle').value = book.title;
+    document.getElementById('bookAuthor').value = book.author;
+    document.getElementById('bookPublisher').value = book.publisher || '';
+    document.getElementById('bookTags').value = (book.tags || []).join(', ');
+    document.getElementById('bookReview').value = book.review || '';
+    document.getElementById('bookReading').checked = book.reading || false;
+    document.getElementById('bookFinished').checked = book.finished || false;
+    selectedRating = book.rating || 0;
+    document.querySelectorAll('#starSelect button').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.star) <= selectedRating);
+    });
+    editingId = book.id;
+  }
+  document.getElementById('addForm').classList.add('open');
+}
+
+function handleSubmit(e) {
+  e.preventDefault();
+  const title = document.getElementById('bookTitle').value.trim();
+  const author = document.getElementById('bookAuthor').value.trim();
+  if (!title || !author) return;
+
+  const tags = document.getElementById('bookTags').value.split(',').map(s => s.trim()).filter(Boolean);
+
+  const bookData = {
+    title,
+    author,
+    publisher: document.getElementById('bookPublisher').value.trim(),
+    tags,
+    review: document.getElementById('bookReview').value.trim(),
+    rating: selectedRating,
+    reading: document.getElementById('bookReading').checked,
+    finished: document.getElementById('bookFinished').checked,
+  };
+
+  if (editingId) {
+    const idx = books.findIndex(b => b.id === editingId);
+    if (idx !== -1) {
+      books[idx] = { ...books[idx], ...bookData };
+    }
+  } else {
+    bookData.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    bookData.created = new Date().toISOString();
+    books.unshift(bookData);
+  }
+
+  saveBooks();
+  render();
+  resetForm();
+}
+
+function deleteBook(id) {
+  if (!confirm('Delete this book?')) return;
+  books = books.filter(b => b.id !== id);
+  saveBooks();
+  render();
+}
+
+function init() {
+  loadTheme();
+  loadBooks();
+
+  document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+  document.getElementById('showAddBtn').addEventListener('click', () => {
+    editingId = null;
+    resetForm();
+    openForm();
+  });
+
+  document.getElementById('cancelAddBtn').addEventListener('click', resetForm);
+
+  document.getElementById('addForm').addEventListener('submit', handleSubmit);
+
+  document.querySelectorAll('#starSelect button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedRating = parseInt(btn.dataset.star);
+      document.querySelectorAll('#starSelect button').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.star) <= selectedRating);
+      });
+    });
+  });
+
+  document.querySelectorAll('.view-toggle .btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.view-toggle .btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentView = btn.dataset.view;
+      render();
+    });
+  });
+
+  document.getElementById('searchInput').addEventListener('input', e => {
+    searchQuery = e.target.value;
+    render();
+  });
+
+  document.getElementById('bookList').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const card = btn.closest('.book-card');
+    if (!card) return;
+    const id = card.dataset.id;
+    const action = btn.dataset.action;
+
+    if (action === 'delete') {
+      deleteBook(id);
+    } else if (action === 'edit') {
+      const book = books.find(b => b.id === id);
+      if (book) openForm(book);
+    }
+  });
+
+  render();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

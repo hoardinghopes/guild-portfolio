@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookmarks</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg:             #111110;
+      --surface:        #1b1b19;
+      --surface-2:      #232320;
+      --border:         #2d2d2a;
+      --border-strong:  #414140;
+      --text:           #e4e4de;
+      --text-muted:     #7a7a72;
+      --text-faint:     #3c3c38;
+      --accent:         #5b8df0;
+      --accent-hover:   #7aa5f5;
+      --accent-dim:     rgba(91, 141, 240, 0.08);
+      --danger:         #e05555;
+      --danger-dim:     rgba(224, 85, 85, 0.07);
+      --danger-border:  rgba(224, 85, 85, 0.25);
+      --tag-bg:         rgba(91, 141, 240, 0.13);
+      --tag-text:       #7aa5f5;
+      --radius:         8px;
+      --font:           system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2.5rem 1.25rem 4rem;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 660px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 2rem;
+    }
+
+    /* ── Inputs ── */
+
+    input[type="text"],
+    input[type="url"],
+    input[type="search"],
+    textarea {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) - 2px);
+      font-family: var(--font);
+      font-size: 0.9rem;
+      color: var(--text);
+      background: var(--surface-2);
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input[type="text"]::placeholder,
+    input[type="url"]::placeholder,
+    input[type="search"]::placeholder,
+    textarea::placeholder { color: var(--text-faint); }
+
+    input[type="text"]:focus,
+    input[type="url"]:focus,
+    input[type="search"]:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+
+    input[type="search"]::-webkit-search-decoration,
+    input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+    textarea {
+      resize: vertical;
+      min-height: 5rem;
+      line-height: 1.55;
+    }
+
+    label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .error {
+      font-size: 0.8rem;
+      color: var(--danger);
+      min-height: 1em;
+    }
+
+    /* ── Buttons ── */
+
+    button {
+      font-family: var(--font);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      border-radius: calc(var(--radius) - 2px);
+      padding: 0.5rem 1.1rem;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 0.45rem 1rem;
+    }
+    .btn-secondary:hover { border-color: var(--border-strong); color: var(--text); }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid var(--danger-border);
+      padding: 0.45rem 1rem;
+    }
+    .btn-danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+    .btn-icon {
+      background: transparent;
+      border: none;
+      padding: 0.3rem;
+      color: var(--text-faint);
+      cursor: pointer;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, background 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-icon:hover { background: var(--surface-2); color: var(--text-muted); }
+    .btn-icon.danger:hover { color: var(--danger); background: var(--danger-dim); }
+
+    /* ── Add section ── */
+
+    .add-section { margin-bottom: 1.75rem; }
+
+    .add-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: transparent;
+      border: 1px dashed var(--border-strong);
+      color: var(--text-muted);
+      width: 100%;
+      padding: 0.7rem 1rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 400;
+      text-align: left;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .add-toggle:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .add-toggle svg { flex-shrink: 0; }
+
+    .add-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      margin-top: 0;
+      transition: max-height 0.32s ease, opacity 0.22s ease, padding 0.32s ease, margin-top 0.32s ease;
+    }
+    .add-form.open {
+      max-height: 720px;
+      opacity: 1;
+      padding: 1.25rem;
+      margin-top: 0.6rem;
+    }
+
+    .form-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding-top: 0.1rem;
+    }
+
+    /* ── Controls ── */
+
+    .controls {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      margin-bottom: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 180px;
+      position: relative;
+    }
+    .search-box svg {
+      position: absolute;
+      left: 0.65rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .search-box input { padding-left: 2.1rem; }
+
+    /* ── Tag filter ── */
+
+    .tag-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      padding-top: 0.18rem;
+    }
+
+    .btn-tag {
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 0.22rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .btn-tag:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-tag.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ── List header ── */
+
+    .list-header {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.6rem;
+    }
+
+    /* ── Bookmark list ── */
+
+    .bookmark-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0);   }
+    }
+
+    .bookmark-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.875rem 1rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      animation: cardIn 0.18s ease-out both;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .bookmark-card:hover { border-color: var(--border-strong); }
+    .bookmark-card.is-editing  { border-color: var(--accent); }
+    .bookmark-card.is-deleting { border-color: var(--danger-border); background: var(--danger-dim); }
+
+    .card-actions {
+      display: flex;
+      gap: 0.1rem;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .bookmark-card:hover .card-actions,
+    .bookmark-card.is-editing .card-actions { opacity: 1; }
+
+    /* ── View state ── */
+
+    .bookmark-info { min-width: 0; flex: 1; }
+
+    .bookmark-title {
+      font-size: 0.925rem;
+      font-weight: 500;
+      color: var(--text);
+      text-decoration: none;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 0.15s;
+    }
+    .bookmark-title:hover { color: var(--accent); }
+
+    .bookmark-domain {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+      display: block;
+      letter-spacing: 0.01em;
+    }
+
+    .bookmark-note {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin-top: 0.45rem;
+      line-height: 1.55;
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.5rem;
+    }
+
+    .tag {
+      font-size: 0.68rem;
+      font-weight: 500;
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      border-radius: 999px;
+      padding: 0.14rem 0.5rem;
+      letter-spacing: 0.02em;
+    }
+
+    .bookmark-date {
+      font-size: 0.68rem;
+      color: var(--text-faint);
+      margin-top: 0.45rem;
+      display: block;
+    }
+
+    /* ── Edit state ── */
+
+    .card-edit {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card-edit-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding-top: 0.15rem;
+    }
+
+    .card-edit .error { margin-top: -0.2rem; }
+
+    /* ── Delete state ── */
+
+    .delete-confirm {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex: 1;
+      gap: 1rem;
+    }
+
+    .delete-confirm-message {
+      font-size: 0.875rem;
+      color: var(--danger);
+      font-weight: 500;
+    }
+    .delete-confirm-message span {
+      display: block;
+      font-size: 0.775rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .delete-confirm-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+    /* ── Empty state ── */
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      padding: 3.5rem 0;
+      animation: cardIn 0.2s ease-out both;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Bookmarks</h1>
+
+    <div class="add-section">
+      <button class="add-toggle" id="addToggle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New bookmark
+      </button>
+      <form class="add-form" id="addForm">
+        <div class="field">
+          <label for="urlInput">URL</label>
+          <input type="url" id="urlInput" placeholder="https://example.com" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="titleInput">Title</label>
+          <input type="text" id="titleInput" placeholder="Give it a name" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="noteInput">Note <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:1.1em">(optional)</span></label>
+          <textarea id="noteInput" placeholder="A brief description…" rows="3"></textarea>
+        </div>
+        <div class="field">
+          <label for="tagsInput">Tags <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:1.1em">(optional, comma-separated)</span></label>
+          <input type="text" id="tagsInput" placeholder="e.g. rust, tools, reference" autocomplete="off">
+        </div>
+        <div class="error" id="formError"></div>
+        <div class="form-footer">
+          <button type="button" class="btn-secondary" id="cancelAdd">Cancel</button>
+          <button type="submit" class="btn-primary">Add bookmark</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="controls">
+      <div class="search-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="searchInput" placeholder="Search titles and notes…" autocomplete="off">
+      </div>
+      <div id="tagFilter"></div>
+    </div>
+
+    <div class="list-header" id="listHeader"></div>
+    <div class="bookmark-list" id="bookmarkList"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'bookmarks';
+
+    let editingIndex  = null;
+    let deletingIndex = null;
+    let activeTag     = null;
+
+    // ── Icons ──────────────────────────────────────────────────────────────────
+
+    const ICON_EDIT  = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+    const ICON_TRASH = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+
+    // ── Storage ────────────────────────────────────────────────────────────────
+
+    function load() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+      catch { return []; }
+    }
+
+    function save(bookmarks) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarks));
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleDateString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric'
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function escapeAttr(str) {
+      try {
+        const { protocol } = new URL(str);
+        if (protocol !== 'http:' && protocol !== 'https:') return '#';
+      } catch { return '#'; }
+      return escapeHtml(str);
+    }
+
+    function extractDomain(url) {
+      try { return new URL(url).hostname.replace(/^www\./, ''); }
+      catch { return null; }
+    }
+
+    function parseTags(raw) {
+      return raw ? raw.split(',').map(t => t.trim()).filter(Boolean) : [];
+    }
+
+    function validateUrl(url) {
+      if (!url) return 'A URL is required.';
+      try {
+        const { protocol } = new URL(url);
+        if (protocol !== 'http:' && protocol !== 'https:')
+          return 'URL must start with http:// or https://';
+      } catch { return "That doesn't look like a valid URL."; }
+      return null;
+    }
+
+    // ── Card templates ─────────────────────────────────────────────────────────
+
+    function cardView(bm, i, nth) {
+      const domain  = extractDomain(bm.url);
+      const notePart = bm.note
+        ? `<p class="bookmark-note">${escapeHtml(bm.note)}</p>` : '';
+      const tagPart  = bm.tags && bm.tags.length
+        ? `<div class="tag-list">${bm.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : '';
+
+      return `
+        <div class="bookmark-card" data-index="${i}" style="animation-delay:${Math.min(nth * 0.04, 0.18)}s">
+          <div class="bookmark-info">
+            <a class="bookmark-title" href="${escapeAttr(bm.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(bm.title)}</a>
+            ${domain ? `<span class="bookmark-domain">${escapeHtml(domain)}</span>` : ''}
+            ${notePart}
+            ${tagPart}
+            <span class="bookmark-date">${formatDate(bm.savedAt)}</span>
+          </div>
+          <div class="card-actions">
+            <button class="btn-icon" data-edit="${i}" title="Edit">${ICON_EDIT}</button>
+            <button class="btn-icon danger" data-delete="${i}" title="Delete">${ICON_TRASH}</button>
+          </div>
+        </div>`;
+    }
+
+    function cardEdit(bm, i) {
+      return `
+        <div class="bookmark-card is-editing" data-index="${i}">
+          <div class="card-edit">
+            <div class="field">
+              <label>URL</label>
+              <input type="url" data-edit-url="${i}" value="${escapeHtml(bm.url)}" autocomplete="off">
+            </div>
+            <div class="field">
+              <label>Title</label>
+              <input type="text" data-edit-title="${i}" value="${escapeHtml(bm.title)}" autocomplete="off">
+            </div>
+            <div class="field">
+              <label>Note <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:1.1em">(optional)</span></label>
+              <textarea data-edit-note="${i}" rows="3">${escapeHtml(bm.note || '')}</textarea>
+            </div>
+            <div class="field">
+              <label>Tags <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:1.1em">(optional, comma-separated)</span></label>
+              <input type="text" data-edit-tags="${i}" value="${escapeHtml((bm.tags || []).join(', '))}" autocomplete="off">
+            </div>
+            <div class="error" id="editError-${i}"></div>
+            <div class="card-edit-footer">
+              <button class="btn-secondary" data-cancel="${i}">Cancel</button>
+              <button class="btn-primary" data-save="${i}">Save</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function cardDeleting(bm, i) {
+      return `
+        <div class="bookmark-card is-deleting" data-index="${i}">
+          <div class="delete-confirm">
+            <div class="delete-confirm-message">
+              Delete this bookmark?
+              <span>${escapeHtml(bm.title)}</span>
+            </div>
+            <div class="delete-confirm-actions">
+              <button class="btn-secondary" data-cancel="${i}">Cancel</button>
+              <button class="btn-danger" data-delete-confirm="${i}">Delete</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ── Render ─────────────────────────────────────────────────────────────────
+
+    function renderTagFilter(bookmarks) {
+      const el = document.getElementById('tagFilter');
+      const allTags = [...new Set(bookmarks.flatMap(bm => bm.tags || []))].sort();
+      if (allTags.length === 0) { el.innerHTML = ''; return; }
+
+      const buttons = ['All', ...allTags].map(tag => {
+        const isAll    = tag === 'All';
+        const isActive = isAll ? activeTag === null : activeTag === tag;
+        return `<button class="btn-tag${isActive ? ' active' : ''}" data-filter="${isAll ? '' : escapeHtml(tag)}">${escapeHtml(tag)}</button>`;
+      });
+
+      el.innerHTML = `<div class="tag-filter">${buttons.join('')}</div>`;
+    }
+
+    function render() {
+      const bookmarks = load();
+      const list      = document.getElementById('bookmarkList');
+      const header    = document.getElementById('listHeader');
+      const q         = document.getElementById('searchInput').value.trim().toLowerCase();
+
+      renderTagFilter(bookmarks);
+
+      if (bookmarks.length === 0) {
+        header.textContent = '';
+        list.innerHTML = '<p class="empty-state">No bookmarks yet.</p>';
+        return;
+      }
+
+      const indexed  = bookmarks.map((bm, i) => ({ bm, i }));
+      const afterTag = activeTag
+        ? indexed.filter(({ bm }) => bm.tags && bm.tags.includes(activeTag))
+        : indexed;
+      const visible  = q
+        ? afterTag.filter(({ bm }) =>
+            bm.title.toLowerCase().includes(q) ||
+            (bm.note && bm.note.toLowerCase().includes(q)))
+        : afterTag;
+
+      const total = bookmarks.length;
+      header.textContent = (activeTag || q)
+        ? `${visible.length} of ${total} bookmark${total === 1 ? '' : 's'}`
+        : `${total} bookmark${total === 1 ? '' : 's'}`;
+
+      if (visible.length === 0) {
+        const reason = activeTag && q
+          ? `tagged "${escapeHtml(activeTag)}" matching "${escapeHtml(q)}"`
+          : activeTag ? `tagged "${escapeHtml(activeTag)}"`
+          : `matching "${escapeHtml(q)}"`;
+        list.innerHTML = `<p class="empty-state">No bookmarks ${reason}.</p>`;
+        return;
+      }
+
+      list.innerHTML = visible.map(({ bm, i }, nth) => {
+        if (i === editingIndex)  return cardEdit(bm, i);
+        if (i === deletingIndex) return cardDeleting(bm, i);
+        return cardView(bm, i, nth);
+      }).join('');
+    }
+
+    // ── Add form ───────────────────────────────────────────────────────────────
+
+    function openForm() {
+      document.getElementById('addForm').classList.add('open');
+      document.getElementById('addToggle').style.display = 'none';
+      // Delay focus until after the transition begins
+      setTimeout(() => document.getElementById('urlInput').focus(), 50);
+    }
+
+    function closeForm() {
+      document.getElementById('addForm').classList.remove('open');
+      document.getElementById('addToggle').style.display = '';
+      document.getElementById('formError').textContent = '';
+    }
+
+    document.getElementById('addToggle').addEventListener('click', openForm);
+    document.getElementById('cancelAdd').addEventListener('click', closeForm);
+
+    document.getElementById('addForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const errorEl = document.getElementById('formError');
+      errorEl.textContent = '';
+
+      const url   = document.getElementById('urlInput').value.trim();
+      const title = document.getElementById('titleInput').value.trim();
+      const note  = document.getElementById('noteInput').value.trim();
+      const tags  = parseTags(document.getElementById('tagsInput').value);
+
+      const urlError = validateUrl(url);
+      if (urlError) { errorEl.textContent = urlError; return; }
+      if (!title)   { errorEl.textContent = 'A title is required.'; return; }
+
+      const bookmarks = load();
+      bookmarks.unshift({ url, title, note, tags, savedAt: new Date().toISOString() });
+      save(bookmarks);
+
+      ['urlInput', 'titleInput', 'noteInput', 'tagsInput'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      closeForm();
+      render();
+    });
+
+    // ── Search ─────────────────────────────────────────────────────────────────
+
+    document.getElementById('searchInput').addEventListener('input', () => {
+      editingIndex  = null;
+      deletingIndex = null;
+      render();
+    });
+
+    // ── Tag filter ─────────────────────────────────────────────────────────────
+
+    document.getElementById('tagFilter').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-filter]');
+      if (!btn) return;
+      activeTag     = btn.dataset.filter || null;
+      editingIndex  = null;
+      deletingIndex = null;
+      render();
+    });
+
+    // ── List event delegation ──────────────────────────────────────────────────
+
+    document.getElementById('bookmarkList').addEventListener('click', (e) => {
+      const editBtn    = e.target.closest('[data-edit]');
+      const deleteBtn  = e.target.closest('[data-delete]');
+      const saveBtn    = e.target.closest('[data-save]');
+      const cancelBtn  = e.target.closest('[data-cancel]');
+      const confirmBtn = e.target.closest('[data-delete-confirm]');
+
+      if (editBtn) {
+        editingIndex  = parseInt(editBtn.dataset.edit, 10);
+        deletingIndex = null;
+        render();
+        document.querySelector(`[data-edit-title="${editingIndex}"]`)?.focus();
+        return;
+      }
+
+      if (deleteBtn) {
+        deletingIndex = parseInt(deleteBtn.dataset.delete, 10);
+        editingIndex  = null;
+        render();
+        return;
+      }
+
+      if (saveBtn) {
+        const i       = parseInt(saveBtn.dataset.save, 10);
+        const errorEl = document.getElementById(`editError-${i}`);
+        errorEl.textContent = '';
+
+        const url   = document.querySelector(`[data-edit-url="${i}"]`).value.trim();
+        const title = document.querySelector(`[data-edit-title="${i}"]`).value.trim();
+        const note  = document.querySelector(`[data-edit-note="${i}"]`).value.trim();
+        const tags  = parseTags(document.querySelector(`[data-edit-tags="${i}"]`).value);
+
+        const urlError = validateUrl(url);
+        if (urlError) { errorEl.textContent = urlError; return; }
+        if (!title)   { errorEl.textContent = 'A title is required.'; return; }
+
+        const bookmarks = load();
+        bookmarks[i] = { ...bookmarks[i], url, title, note, tags };
+        save(bookmarks);
+        editingIndex = null;
+        render();
+        return;
+      }
+
+      if (cancelBtn) {
+        editingIndex  = null;
+        deletingIndex = null;
+        render();
+        return;
+      }
+
+      if (confirmBtn) {
+        const i = parseInt(confirmBtn.dataset.deleteConfirm, 10);
+        const bookmarks = load();
+        bookmarks.splice(i, 1);
+        save(bookmarks);
+        deletingIndex = null;
+        if (editingIndex !== null && editingIndex > i) editingIndex--;
+        render();
+        return;
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
