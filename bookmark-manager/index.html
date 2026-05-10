@@ -440,6 +440,7 @@
     if (idx === -1) return;
     bookmarks[idx] = {
       id,
+      created_at: bookmarks[idx].created_at,
       url: document.getElementById(`edit-url-${id}`).value.trim(),
       title: document.getElementById(`edit-title-${id}`).value.trim(),
       notes: document.getElementById(`edit-notes-${id}`).value.trim(),
@@ -477,7 +478,7 @@
     const notes = document.getElementById('notes').value.trim();
     const tags = document.getElementById('tags').value.trim().split(',').map(t => t.trim()).filter(t => t);
     const bookmarks = load();
-    bookmarks.unshift({ id: crypto.randomUUID(), url, title, notes, tags });
+    bookmarks.unshift({ id: crypto.randomUUID(), url, title, notes, tags, created_at: new Date().toISOString() });
     save(bookmarks);
     document.getElementById('form').reset();
     formBody.classList.remove('open');
