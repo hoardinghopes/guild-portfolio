@@ -105,6 +105,19 @@
     transition: background .15s;
   }
   .btn-primary:hover { background: #1e40af; }
+  .btn-danger {
+    background: #991b1b;
+    color: #fff;
+    border: none;
+    padding-block: .55rem;
+    padding-inline: 1.1rem;
+    font-size: .875rem;
+    font-weight: 600;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-danger:hover { background: #7f1d1d; }
 
   /* --- Search --- */
   #search {
@@ -396,7 +409,7 @@
   <p id="confirmMsg">Delete this bookmark?</p>
   <div class="btn-row">
     <button class="btn-secondary" id="confirmCancel">Cancel</button>
-    <button class="btn-primary" id="confirmOk">Delete</button>
+    <button class="btn-danger" id="confirmOk">Delete</button>
   </div>
 </dialog>
 
