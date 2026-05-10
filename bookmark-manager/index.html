@@ -65,7 +65,6 @@
   .form-body.open { display: block; }
   .form-card.open { display: block; }
   .form-row { margin-bottom: .75rem; }
-  .form-row:last-of-type { margin-bottom: 0; }
   label {
     display: block;
     font-size: .75rem;
@@ -101,7 +100,6 @@
     border-radius: 7px;
     cursor: pointer;
     transition: background .15s;
-    margin-top: .5rem;
   }
   .btn-primary:hover { background: #2563eb; }
 
@@ -213,7 +211,8 @@
     opacity: 0;
     transition: opacity .15s;
   }
-  .bookmark:hover .bookmark-actions { opacity: 1; }
+  .bookmark:hover .bookmark-actions,
+  .bookmark-actions:focus-within { opacity: 1; }
   .icon-btn {
     background: none;
     border: none;
@@ -258,6 +257,7 @@
     border-radius: 7px;
     cursor: pointer;
     transition: background .15s;
+    padding: .55rem 1.1rem;
   }
   .btn-secondary:hover { background: #3a3a3e; }
 
@@ -268,13 +268,38 @@
     padding: 3.5rem 0;
     font-size: .875rem;
   }
+
+  /* --- Confirm dialog --- */
+  #confirmDialog {
+    background: #1a1a1e;
+    border: 1px solid #2a2a2e;
+    border-radius: 10px;
+    padding: 1.5rem;
+    color: #e1e1e3;
+    max-width: 360px;
+    width: 90%;
+    margin: auto;
+  }
+  #confirmDialog::backdrop {
+    background: rgba(0, 0, 0, .6);
+  }
+  #confirmDialog p {
+    font-size: .9375rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+  }
+  #confirmDialog .btn-row {
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+  }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>Bookmarks</h1>
 
-  <button class="form-toggle" id="formToggle">
+  <button class="form-toggle" id="formToggle" aria-expanded="false" aria-controls="form">
     <span class="plus">+</span>
     <span>Add bookmark</span>
   </button>
@@ -306,10 +331,41 @@
   <div id="list"></div>
 </div>
 
+<dialog id="confirmDialog" aria-labelledby="confirmMsg">
+  <p id="confirmMsg">Delete this bookmark?</p>
+  <div class="btn-row">
+    <button class="btn-secondary" id="confirmCancel">Cancel</button>
+    <button class="btn-primary" id="confirmOk">Delete</button>
+  </div>
+</dialog>
+
 <script>
   const STORAGE_KEY = 'bookmarks';
   let currentFilter = '';
   let searchQuery = '';
+
+  function confirmDelete(onConfirm) {
+    const dialog = document.getElementById('confirmDialog');
+    const okBtn = document.getElementById('confirmOk');
+    const cancelBtn = document.getElementById('confirmCancel');
+    let trigger = document.activeElement;
+
+    function cleanup() {
+      dialog.close();
+      okBtn.removeEventListener('click', handleOk);
+      cancelBtn.removeEventListener('click', handleCancel);
+      dialog.removeEventListener('keydown', handleKey);
+      if (trigger) trigger.focus();
+    }
+    function handleOk() { cleanup(); onConfirm(); }
+    function handleCancel() { cleanup(); }
+    function handleKey(e) { if (e.key === 'Escape') { e.preventDefault(); cleanup(); } }
+
+    okBtn.addEventListener('click', handleOk);
+    cancelBtn.addEventListener('click', handleCancel);
+    dialog.addEventListener('keydown', handleKey);
+    dialog.showModal();
+  }
 
   function load() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
@@ -349,8 +405,8 @@
       : tagFiltered;
 
     if (uniqueTags.length) {
-      filterBar.innerHTML = `<button class="filter-pill${currentFilter === '' ? ' active' : ''}" data-filter="">All</button>`
-        + uniqueTags.map(t => `<button class="filter-pill${currentFilter === t ? ' active' : ''}" data-filter="${escapeAttr(t)}">${escapeHtml(t)}</button>`).join('');
+      filterBar.innerHTML = `<button class="filter-pill${currentFilter === '' ? ' active' : ''}" data-filter="" aria-pressed="${currentFilter === '' ? 'true' : 'false'}">All</button>`
+        + uniqueTags.map(t => `<button class="filter-pill${currentFilter === t ? ' active' : ''}" data-filter="${escapeAttr(t)}" aria-pressed="${currentFilter === t ? 'true' : 'false'}">${escapeHtml(t)}</button>`).join('');
       filterBar.querySelectorAll('.filter-pill').forEach(btn => {
         btn.addEventListener('click', () => { currentFilter = btn.dataset.filter; render(); });
       });
@@ -371,9 +427,9 @@
           ${b.tags && b.tags.length ? `<div class="bookmark-tags">${b.tags.map(t => `<span class="tag filter-tag" data-filter="${escapeAttr(t)}">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
         </div>
         <div class="bookmark-actions">
-          <button class="icon-btn copy-btn" title="Copy URL">&#10697;</button>
-          <button class="icon-btn edit-btn" title="Edit">&#9998;</button>
-          <button class="icon-btn delete" title="Delete">&times;</button>
+          <button class="icon-btn copy-btn" title="Copy URL" aria-label="Copy URL">&#10697;</button>
+          <button class="icon-btn edit-btn" title="Edit" aria-label="Edit bookmark">&#9998;</button>
+          <button class="icon-btn delete" title="Delete" aria-label="Delete bookmark">&times;</button>
         </div>
       </div>
     `).join('');
@@ -382,10 +438,11 @@
     });
     list.querySelectorAll('.icon-btn.delete').forEach(btn => {
       btn.addEventListener('click', () => {
-        if (!confirm('Delete this bookmark?')) return;
         const id = btn.closest('.bookmark').dataset.id;
-        save(load().filter(b => b.id !== id));
-        render();
+        confirmDelete(() => {
+          save(load().filter(b => b.id !== id));
+          render();
+        });
       });
     });
     list.querySelectorAll('.icon-btn.copy-btn').forEach(btn => {
@@ -454,6 +511,7 @@
     `;
     card.querySelector('form').addEventListener('submit', e => { e.preventDefault(); saveEdit(id); });
     card.querySelector('.cancel-btn').addEventListener('click', () => render());
+    card.querySelector(`#edit-url-${id}`).focus();
   }
 
   function saveEdit(id) {
@@ -482,9 +540,12 @@
   const formBody = document.getElementById('formBody');
   const f = document.getElementById('form');
   formToggle.addEventListener('click', () => {
+    const opening = !f.classList.contains('open');
     f.classList.toggle('open');
     formBody.classList.toggle('open');
     formToggle.classList.toggle('open');
+    formToggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
+    if (opening) document.getElementById('url').focus();
   });
 
   /* --- Form submit --- */
