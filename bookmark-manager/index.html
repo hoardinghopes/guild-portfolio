@@ -478,7 +478,11 @@
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarks));
     } catch (e) {
-      alert('Could not save: browser storage is full. Free up space or export your bookmarks before adding more.');
+      if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+        alert('Could not save: browser storage is full. Free up space or export your bookmarks before adding more.');
+      } else {
+        alert('Could not save: browser storage is not available. Check your browser settings.');
+      }
     }
   }
 
