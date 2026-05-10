@@ -370,7 +370,7 @@
 </style>
 </head>
 <body>
-<div class="container">
+<main class="container">
   <h1>Bookmarks</h1>
 
   <button class="form-toggle" id="formToggle" aria-expanded="false" aria-controls="form">
@@ -378,7 +378,7 @@
     <span>Add bookmark</span>
   </button>
 
-  <form class="form-card" id="form">
+  <form class="form-card" id="form" aria-label="Add bookmark">
       <div class="form-row">
         <label for="url">URL</label>
         <input type="url" id="url" placeholder="https://" required maxlength="2048">
@@ -398,12 +398,14 @@
       <button class="btn-primary" type="submit">Save</button>
   </form>
 
-  <label for="search" class="sr-only">Search bookmarks</label>
-  <input type="text" id="search" placeholder="Search bookmarks..." autocomplete="off">
-  <div class="filter-bar" id="filterBar" role="group" aria-label="Filter by tag"></div>
+  <search>
+    <label for="search" class="sr-only">Search bookmarks</label>
+    <input type="text" id="search" placeholder="Search bookmarks..." autocomplete="off">
+    <div class="filter-bar" id="filterBar" role="group" aria-label="Filter by tag"></div>
+  </search>
   <div id="list"></div>
   <div id="resultAnnounce" class="sr-only" aria-live="polite"></div>
-</div>
+</main>
 
 <dialog id="confirmDialog" aria-labelledby="confirmMsg">
   <p id="confirmMsg">Delete this bookmark?</p>
