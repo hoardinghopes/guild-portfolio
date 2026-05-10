@@ -160,10 +160,10 @@ That's it. One file you can open in a browser.
 ## 9. Visual Design
 
 - **Font**: System font stack (`-apple-system, BlinkMacSystemFont, "Segoe UI", ...`)
-- **Colors**: Clean white background, dark gray text, one accent color for links/tags (e.g. `#2563eb` blue)
-- **Layout**: Centered single column, max-width ~720px
-- **Tags**: Rounded pills with light background, dark text
-- **No CSS framework** — write the 50-100 lines of CSS needed
+- **Colors**: Dark theme — `#121214` page background, `#1a1a1e` card/surface background, `#e1e1e3` body text, `#3b82f6` accent blue for buttons and active states, `#93b4f8` link colour
+- **Layout**: Centered single column, max-width 640px
+- **Tags**: Rounded pills (`#1e1e24` background, `#999` text, `#2a2a2e` border)
+- **No CSS framework** — plain CSS using logical properties (`margin-block-*`, `padding-inline-*`, etc.)
 - **Responsive**: Works on desktop and mobile via `max-width` + flexible inputs
 
 ---
@@ -172,6 +172,5 @@ That's it. One file you can open in a browser.
 
 - Browser bookmarklet to quickly save from any page
 - Import from browser bookmarks HTML export
-- Dark mode toggle
 - Pagination (if bookmarks exceed ~100)
 - Backup/restore database file
