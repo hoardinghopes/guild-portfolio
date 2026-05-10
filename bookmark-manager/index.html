@@ -553,7 +553,7 @@
       btn.addEventListener('click', () => {
         const id = btn.closest('.bookmark').dataset.id;
         confirmDelete(() => {
-          save(load().filter(b => b.id !== id));
+          save(allBookmarks.filter(b => b.id !== id));
           render();
         });
       });
@@ -561,9 +561,9 @@
     list.querySelectorAll('.icon-btn.copy-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.closest('.bookmark').dataset.id;
-        const url = load().find(b => b.id === id)?.url;
-        if (!url) return;
-        navigator.clipboard.writeText(url).then(() => {
+        const bookmark = allBookmarks.find(b => b.id === id);
+        if (!bookmark || !bookmark.url) return;
+        navigator.clipboard.writeText(bookmark.url).then(() => {
           const prev = btn.innerHTML;
           btn.innerHTML = '&#10003;';
           setTimeout(() => { btn.innerHTML = prev; }, 1500);
@@ -571,7 +571,11 @@
       });
     });
     list.querySelectorAll('.icon-btn.edit-btn').forEach(btn => {
-      btn.addEventListener('click', () => startEdit(btn.closest('.bookmark').dataset.id));
+      btn.addEventListener('click', () => {
+        const id = btn.closest('.bookmark').dataset.id;
+        const bookmark = allBookmarks.find(b => b.id === id);
+        if (bookmark) startEdit(bookmark);
+      });
     });
     list.querySelectorAll('.bookmark-note').forEach(note => {
       const toggle = note.nextElementSibling;
@@ -611,9 +615,8 @@
     }
   }
 
-  function startEdit(id) {
-    const bookmark = load().find(b => b.id === id);
-    if (!bookmark) return;
+  function startEdit(bookmark) {
+    const id = bookmark.id;
     const card = document.querySelector(`.bookmark[data-id="${id}"]`);
     card.innerHTML = `
       <form class="edit-form">
