@@ -624,7 +624,7 @@
 
   function startEdit(bookmark) {
     const id = bookmark.id;
-    const card = document.querySelector(`.bookmark[data-id="${id}"]`);
+    const card = document.querySelector(`.bookmark[data-id="${CSS.escape(id)}"]`);
     card.innerHTML = `
       <form class="edit-form">
         <div class="form-row">
