@@ -637,6 +637,15 @@
     }
   }
 
+  function parseTags(value) {
+    const all = [...new Set(value.trim().split(',').map(t => t.trim().toLowerCase()).filter(t => t))];
+    const valid = all.filter(t => t.length <= 50);
+    if (valid.length < all.length) {
+      alert(`${all.length - valid.length} tag(s) were too long (max 50 characters) and were not saved.`);
+    }
+    return valid;
+  }
+
   function escapeHtml(s) {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
@@ -703,7 +712,7 @@
       url,
       title,
       notes: document.getElementById(`edit-notes-${id}`).value.trim(),
-      tags: [...new Set(document.getElementById(`edit-tags-${id}`).value.trim().split(',').map(t => t.trim().toLowerCase()).filter(t => t))]
+      tags: parseTags(document.getElementById(`edit-tags-${id}`).value)
     };
     save(allBookmarks);
     render();
@@ -731,7 +740,7 @@
       return;
     }
     const notes = document.getElementById('notes').value.trim();
-    const tags = [...new Set(document.getElementById('tags').value.trim().split(',').map(t => t.trim().toLowerCase()).filter(t => t))];
+    const tags = parseTags(document.getElementById('tags').value);
     allBookmarks.unshift({ id: generateId(), url, title, notes, tags, created_at: new Date().toISOString() });
     save(allBookmarks);
     document.getElementById('form').reset();
