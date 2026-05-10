@@ -417,7 +417,6 @@
 
 <script>
   const STORAGE_KEY = 'bookmarks';
-  const BACKUP_KEY = 'bookmarks_corrupt_backup';
   let allBookmarks = [];
   let currentFilter = '';
   let searchQuery = '';
@@ -466,9 +465,10 @@
       if (!Array.isArray(data)) throw new Error('data is not an array');
       return data;
     } catch (e) {
-      try { localStorage.setItem(BACKUP_KEY, raw); } catch {}
-      console.warn('Bookmarks data corrupted. A backup was saved under "bookmarks_corrupt_backup".', e.message);
-      alert('Your bookmarks file appears to be corrupted. A backup was saved so the data can be recovered. The app will start fresh.');
+      const backupKey = `bookmarks_corrupt_backup_${Date.now()}`;
+      try { localStorage.setItem(backupKey, raw); } catch {}
+      console.warn(`Bookmarks data corrupted. A backup was saved under "${backupKey}".`, e.message);
+      alert(`Your bookmarks file appears to be corrupted. A backup was saved under "${backupKey}" so the data can be recovered. The app will start fresh.`);
       return [];
     }
   }
