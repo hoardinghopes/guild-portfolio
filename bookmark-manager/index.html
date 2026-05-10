@@ -393,6 +393,15 @@
     return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
   }
 
+  function isSafeUrl(url) {
+    try {
+      const { protocol } = new URL(url);
+      return protocol === 'https:' || protocol === 'http:';
+    } catch {
+      return false;
+    }
+  }
+
   function startEdit(id) {
     const bookmark = load().find(b => b.id === id);
     if (!bookmark) return;
@@ -437,6 +446,10 @@
       tags: document.getElementById(`edit-tags-${id}`).value.trim().split(',').map(t => t.trim()).filter(t => t)
     };
     if (!bookmarks[idx].url || !bookmarks[idx].title) return;
+    if (!isSafeUrl(bookmarks[idx].url)) {
+      alert('URL must start with http:// or https://');
+      return;
+    }
     save(bookmarks);
     render();
   }
@@ -457,6 +470,10 @@
     const url = document.getElementById('url').value.trim();
     const title = document.getElementById('title').value.trim();
     if (!url || !title) return;
+    if (!isSafeUrl(url)) {
+      alert('URL must start with http:// or https://');
+      return;
+    }
     const notes = document.getElementById('notes').value.trim();
     const tags = document.getElementById('tags').value.trim().split(',').map(t => t.trim()).filter(t => t);
     const bookmarks = load();
