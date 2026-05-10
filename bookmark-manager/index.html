@@ -429,6 +429,7 @@
 
   function confirmDelete(title, onConfirm) {
     const dialog = document.getElementById('confirmDialog');
+    if (dialog.open) return;
     const msg = document.getElementById('confirmMsg');
     msg.textContent = `Delete "${title}"?`;
     const okBtn = document.getElementById('confirmOk');
