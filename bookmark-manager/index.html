@@ -722,7 +722,7 @@
   const formToggle = document.getElementById('formToggle');
   const form = document.getElementById('form');
   formToggle.addEventListener('click', () => {
-    const opening = !f.classList.contains('open');
+    const opening = !form.classList.contains('open');
     form.classList.toggle('open');
     formToggle.classList.toggle('open');
     formToggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
@@ -744,7 +744,7 @@
     allBookmarks.unshift({ id: generateId(), url, title, notes, tags, created_at: new Date().toISOString() });
     save(allBookmarks);
     document.getElementById('form').reset();
-    f.classList.remove('open');
+    form.classList.remove('open');
     formToggle.classList.remove('open');
     formToggle.setAttribute('aria-expanded', 'false');
     searchQuery = '';
@@ -758,6 +758,12 @@
     searchQuery = e.target.value;
     clearTimeout(searchTimer);
     searchTimer = setTimeout(render, 180);
+  });
+
+  window.addEventListener('storage', e => {
+    if (e.key !== STORAGE_KEY) return;
+    allBookmarks = load();
+    render();
   });
 
   allBookmarks = load();
