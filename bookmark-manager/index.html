@@ -317,7 +317,11 @@
   }
 
   function save(bookmarks) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarks));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarks));
+    } catch (e) {
+      alert('Could not save: browser storage is full. Free up space or export your bookmarks before adding more.');
+    }
   }
 
   function domain(url) {
