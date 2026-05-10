@@ -418,6 +418,7 @@
 <script>
   const STORAGE_KEY = 'bookmarks';
   const BACKUP_KEY = 'bookmarks_corrupt_backup';
+  let allBookmarks = [];
   let currentFilter = '';
   let searchQuery = '';
   let _idCounter = 0;
@@ -509,7 +510,6 @@
   }
 
   function render() {
-    const allBookmarks = load();
     const list = document.getElementById('list');
     const filterBar = document.getElementById('filterBar');
     const announce = document.getElementById('resultAnnounce');
@@ -582,7 +582,8 @@
         const bookmark = allBookmarks.find(b => b.id === id);
         const title = bookmark ? bookmark.title : 'this bookmark';
         confirmDelete(title, () => {
-          save(allBookmarks.filter(b => b.id !== id));
+          allBookmarks = allBookmarks.filter(b => b.id !== id);
+          save(allBookmarks);
           render();
         });
       });
@@ -684,18 +685,17 @@
       alert('URL must start with http:// or https://');
       return;
     }
-    const bookmarks = load();
-    const idx = bookmarks.findIndex(b => b.id === id);
+    const idx = allBookmarks.findIndex(b => b.id === id);
     if (idx === -1) return;
-    bookmarks[idx] = {
+    allBookmarks[idx] = {
       id,
-      created_at: bookmarks[idx].created_at,
+      created_at: allBookmarks[idx].created_at,
       url,
       title,
       notes: document.getElementById(`edit-notes-${id}`).value.trim(),
       tags: [...new Set(document.getElementById(`edit-tags-${id}`).value.trim().split(',').map(t => t.trim().toLowerCase()).filter(t => t))]
     };
-    save(bookmarks);
+    save(allBookmarks);
     render();
   }
 
@@ -722,9 +722,8 @@
     }
     const notes = document.getElementById('notes').value.trim();
     const tags = [...new Set(document.getElementById('tags').value.trim().split(',').map(t => t.trim().toLowerCase()).filter(t => t))];
-    const bookmarks = load();
-    bookmarks.unshift({ id: generateId(), url, title, notes, tags, created_at: new Date().toISOString() });
-    save(bookmarks);
+    allBookmarks.unshift({ id: generateId(), url, title, notes, tags, created_at: new Date().toISOString() });
+    save(allBookmarks);
     document.getElementById('form').reset();
     f.classList.remove('open');
     formToggle.classList.remove('open');
@@ -735,11 +734,14 @@
     render();
   });
 
+  let searchTimer;
   document.getElementById('search').addEventListener('input', e => {
     searchQuery = e.target.value;
-    render();
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(render, 180);
   });
 
+  allBookmarks = load();
   render();
 </script>
 </body>
