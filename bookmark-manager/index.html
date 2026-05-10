@@ -186,6 +186,11 @@
     color: #555;
     margin-block-start: .125rem;
   }
+  .bookmark-time {
+    font-size: .6875rem;
+    color: #444;
+    margin-block-start: .35rem;
+  }
   .bookmark-note {
     font-size: .8125rem;
     color: #999;
@@ -396,10 +401,14 @@
       okBtn.removeEventListener('click', handleOk);
       cancelBtn.removeEventListener('click', handleCancel);
       dialog.removeEventListener('keydown', handleKey);
-      if (trigger) trigger.focus();
     }
-    function handleOk() { cleanup(); onConfirm(); }
-    function handleCancel() { cleanup(); }
+    function handleOk() {
+      cleanup();
+      onConfirm();
+      const firstDelete = document.querySelector('.bookmark .icon-btn.delete');
+      (firstDelete || document.getElementById('formToggle')).focus();
+    }
+    function handleCancel() { cleanup(); if (trigger) trigger.focus(); }
     function handleKey(e) { if (e.key === 'Escape') { e.preventDefault(); cleanup(); } }
 
     okBtn.addEventListener('click', handleOk);
@@ -424,6 +433,29 @@
   function domain(url) {
     try { return new URL(url).hostname.replace(/^www\./, ''); }
     catch { return ''; }
+  }
+
+  function timeAgo(dateStr) {
+    if (!dateStr) return '';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    if (diff < 0) return 'just now';
+    const s = Math.floor(diff / 1000);
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    const d = Math.floor(h / 24);
+    const w = Math.floor(d / 7);
+    if (s < 60) return 'just now';
+    if (m < 60) return `${m}m ago`;
+    if (h < 24) return `${h}h ago`;
+    if (d === 1) return 'yesterday';
+    if (d < 7) return `${d}d ago`;
+    if (w < 5) return `${w}w ago`;
+    const date = new Date(dateStr);
+    const now = new Date();
+    if (date.getFullYear() === now.getFullYear()) {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   function render() {
@@ -474,6 +506,7 @@
           <div class="bookmark-domain">${escapeHtml(domain(b.url))}</div>
           ${b.notes ? `<div class="bookmark-note">${escapeHtml(b.notes)}</div><button class="note-toggle" aria-expanded="false">Show more</button>` : ''}
           ${b.tags && b.tags.length ? `<div class="bookmark-tags">${b.tags.map(t => `<span class="tag filter-tag" data-filter="${escapeAttr(t)}">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+          ${b.created_at ? `<div class="bookmark-time">${timeAgo(b.created_at)}</div>` : ''}
         </div>
         <div class="bookmark-actions">
           <button class="icon-btn copy-btn" title="Copy URL" aria-label="Copy URL">&#10697;</button>
