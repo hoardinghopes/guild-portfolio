@@ -707,14 +707,16 @@
     card.querySelector(`#edit-url-${id}`).focus();
   }
 
+  function validateBookmark(url, title) {
+    if (!url || !title) { alert('URL and title are required.'); return false; }
+    if (!isSafeUrl(url)) { alert('URL must start with http:// or https://'); return false; }
+    return true;
+  }
+
   function saveEdit(id) {
     const url = document.getElementById(`edit-url-${id}`).value.trim();
     const title = document.getElementById(`edit-title-${id}`).value.trim();
-    if (!url || !title) { alert('URL and title are required.'); return; }
-    if (!isSafeUrl(url)) {
-      alert('URL must start with http:// or https://');
-      return;
-    }
+    if (!validateBookmark(url, title)) return;
     const idx = allBookmarks.findIndex(b => b.id === id);
     if (idx === -1) return;
     allBookmarks = allBookmarks.map(b => b.id === id
@@ -747,11 +749,7 @@
     e.preventDefault();
     const url = document.getElementById('url').value.trim();
     const title = document.getElementById('title').value.trim();
-    if (!url || !title) return;
-    if (!isSafeUrl(url)) {
-      alert('URL must start with http:// or https://');
-      return;
-    }
+    if (!validateBookmark(url, title)) return;
     const notes = document.getElementById('notes').value.trim();
     const tags = parseTags(document.getElementById('tags').value);
     allBookmarks = [{ id: generateId(), url, title, notes, tags, created_at: new Date().toISOString() }, ...allBookmarks];
