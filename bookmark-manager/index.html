@@ -367,6 +367,7 @@
           ${b.tags && b.tags.length ? `<div class="bookmark-tags">${b.tags.map(t => `<span class="tag filter-tag" data-filter="${escapeAttr(t)}">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
         </div>
         <div class="bookmark-actions">
+          <button class="icon-btn copy-btn" title="Copy URL">&#10697;</button>
           <button class="icon-btn edit-btn" title="Edit">&#9998;</button>
           <button class="icon-btn delete" title="Delete">&times;</button>
         </div>
@@ -381,6 +382,18 @@
         const id = btn.closest('.bookmark').dataset.id;
         save(load().filter(b => b.id !== id));
         render();
+      });
+    });
+    list.querySelectorAll('.icon-btn.copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.closest('.bookmark').dataset.id;
+        const url = load().find(b => b.id === id)?.url;
+        if (!url) return;
+        navigator.clipboard.writeText(url).then(() => {
+          const prev = btn.innerHTML;
+          btn.innerHTML = '&#10003;';
+          setTimeout(() => { btn.innerHTML = prev; }, 1500);
+        });
       });
     });
     list.querySelectorAll('.icon-btn.edit-btn').forEach(btn => {
