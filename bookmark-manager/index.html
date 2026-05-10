@@ -629,19 +629,19 @@
       <form class="edit-form">
         <div class="form-row">
           <label for="edit-url-${id}">URL</label>
-          <input type="url" id="edit-url-${id}" value="${escapeAttr(bookmark.url)}" required>
+          <input type="url" id="edit-url-${id}" value="${escapeAttr(bookmark.url)}" required maxlength="2048">
         </div>
         <div class="form-row">
           <label for="edit-title-${id}">Title</label>
-          <input type="text" id="edit-title-${id}" value="${escapeAttr(bookmark.title)}" required>
+          <input type="text" id="edit-title-${id}" value="${escapeAttr(bookmark.title)}" required maxlength="200">
         </div>
         <div class="form-row">
           <label for="edit-notes-${id}">Notes</label>
-          <textarea id="edit-notes-${id}">${escapeHtml(bookmark.notes || '')}</textarea>
+          <textarea id="edit-notes-${id}" maxlength="2000">${escapeHtml(bookmark.notes || '')}</textarea>
         </div>
         <div class="form-row">
           <label for="edit-tags-${id}">Tags</label>
-          <input type="text" id="edit-tags-${id}" value="${escapeAttr((bookmark.tags || []).join(', '))}">
+          <input type="text" id="edit-tags-${id}" value="${escapeAttr((bookmark.tags || []).join(', '))}" maxlength="200">
         </div>
         <div class="btn-row">
           <button class="btn-primary" type="submit">Save</button>
