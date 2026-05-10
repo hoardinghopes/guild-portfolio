@@ -656,6 +656,11 @@
     return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
   }
 
+  function cssEscape(s) {
+    if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(s);
+    return String(s).replace(/[!"#$%&'()*+,.\/:;<=>?@[\]^`{|}~]/g, '\\$&');
+  }
+
   function isSafeUrl(url) {
     try {
       const parsed = new URL(url);
@@ -668,7 +673,7 @@
 
   function startEdit(bookmark) {
     const id = bookmark.id;
-    const card = document.querySelector(`.bookmark[data-id="${CSS.escape(id)}"]`);
+    const card = document.querySelector(`.bookmark[data-id="${cssEscape(id)}"]`);
     card.innerHTML = `
       <form class="edit-form">
         <div class="form-row">
