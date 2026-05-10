@@ -539,7 +539,7 @@
     list.innerHTML = filtered.map(b => `
       <div class="bookmark" data-id="${b.id}">
         <div class="bookmark-body">
-          <a class="bookmark-title" href="${escapeAttr(b.url)}" target="_blank" rel="noopener">${escapeHtml(b.title)}</a>
+          <a class="bookmark-title" href="${escapeAttr(b.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(b.title)}</a>
           <div class="bookmark-domain">${escapeHtml(domain(b.url))}</div>
           <div class="bookmark-url">${escapeHtml(b.url)}</div>
           ${b.notes ? `<div class="bookmark-note">${escapeHtml(b.notes)}</div><button class="note-toggle" aria-expanded="false">Show more</button>` : ''}
