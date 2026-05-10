@@ -657,7 +657,7 @@
   }
 
   function escapeAttr(s) {
-    return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   function cssEscape(s) {
