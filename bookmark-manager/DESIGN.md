@@ -136,13 +136,15 @@ results = bookmarks.filter(b =>
 
 ## 7. App Logic (no routes — all client-side)
 
-| Action | JS function | What it does |
-|--------|-------------|--------------|
-| Load | `loadBookmarks()` | Read from `localStorage`, render list |
-| Add | `addBookmark(url, title, notes, tags)` | Prepend to array, save, re-render |
-| Edit | `editBookmark(id, url, title, notes, tags)` | Find by id, update, save, re-render |
-| Delete | `deleteBookmark(id)` | Filter out by id, save, re-render |
-| Search | `render(filtered)` | Re-render with a filtered array instead of full list |
+| Action | Where | What it does |
+|--------|-------|--------------|
+| Load | `load()` | Read and parse from `localStorage`; returns array |
+| Add | inline in `form` submit handler | Unshift new object onto `allBookmarks`, call `save()`, re-render |
+| Edit | `startEdit(bookmark)` / `saveEdit(id)` | `startEdit` injects an inline edit form; `saveEdit` validates, updates `allBookmarks[idx]`, calls `save()`, re-renders |
+| Delete | inline in delete button handler | Filters `allBookmarks` by id, calls `save()`, re-renders |
+| Search/Filter | `render()` | Reads module-level `searchQuery` and `currentFilter`; no parameter |
+
+`allBookmarks` is a module-level array initialised once from `load()` on startup. All mutations update it in memory and persist via `save()`.
 
 ---
 
@@ -160,9 +162,9 @@ That's it. One file you can open in a browser.
 ## 9. Visual Design
 
 - **Font**: System font stack (`-apple-system, BlinkMacSystemFont, "Segoe UI", ...`)
-- **Colors**: Dark theme — `#121214` page background, `#1a1a1e` card/surface background, `#e1e1e3` body text, `#3b82f6` accent blue for buttons and active states, `#93b4f8` link colour
+- **Colors**: Dark theme — `#121214` page background, `#1a1a1e` card/surface background, `#e1e1e3` body text, `#1e4ac8` accent blue for buttons and active states, `#93b4f8` link colour
 - **Layout**: Centered single column, max-width 640px
-- **Tags**: Rounded pills (`#1e1e24` background, `#999` text, `#2a2a2e` border)
+- **Tags**: Rounded pills (`#1e1e24` background, `#aaaaaa` text, `#2a2a2e` border)
 - **No CSS framework** — plain CSS using logical properties (`margin-block-*`, `padding-inline-*`, etc.)
 - **Responsive**: Works on desktop and mobile via `max-width` + flexible inputs
 

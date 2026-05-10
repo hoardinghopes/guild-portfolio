@@ -173,7 +173,7 @@ After the first review fixes (from Claude) were implemented, I asked for an adve
 
 ### Code quality
 
-- **`load()` called N times per render cycle** — The delete, copy, and edit handlers each re-read localStorage. Changed all to reference the `allBookmarks` captured from the single `load()` call in `render()`. `startEdit` now accepts a bookmark object instead of calling `load()` (`index.html:552-575`, `index.html:614`).
+- **`load()` called N times per render cycle** — The delete, copy, and edit handlers each re-read localStorage. Changed all to reference the `allBookmarks` captured from the single `load()` call in `render()`. `startEdit` now accepts a bookmark object instead of calling `load()`. However, `saveEdit` was missed in this pass and continued to call `load()` independently — this was later corrected (see section 11).
 
 - **Redundant `.form-body` toggle** — Removed the `<div class="form-body">` wrapper, its CSS, and all JS references. Visibility is now controlled solely by `.form-card.open` (`index.html:67-68`, `index.html:368-387`, `index.html:671-676`, `index.html:696-697`).
 
@@ -186,3 +186,19 @@ After the first review fixes (from Claude) were implemented, I asked for an adve
 - **Duplicate tags stored** — `"css, css"` produced `["css", "css"]`, skewing badge display. Wrapped both tag inputs in `[...new Set(...)]` to deduplicate (`index.html:663`, `index.html:691`).
 
 - **Data corruption silently reset** — Corrupted localStorage returned `[]` with no notification. Now backs up the raw string to a second key, alerts the user, and logs details to console (`index.html:404-405`, `index.html:441-455`).
+
+---
+
+## 11. Second adversarial review & fixes
+
+A second adversarial review was run after section 10's fixes were applied. Key corrections:
+
+- **`saveEdit` still called `load()` independently** — The section 10 fix to reduce `load()` calls was only partially applied: `startEdit` was updated, but `saveEdit` continued to call `load()` on its own. This was corrected as part of a broader refactor (see below).
+
+- **Module-level `allBookmarks` cache** — `render()` was calling `load()` (a synchronous localStorage read and JSON parse) on every invocation, including every search keystroke. `allBookmarks` was promoted to module scope, initialised once at startup via `load()`, and updated in-place by every mutation (add, edit, delete). `render()` now reads from the in-memory array with no storage access. This also completed the fix for `saveEdit`, which now mutates `allBookmarks` directly instead of calling `load()`.
+
+- **Search debounce** — The search input called `render()` on every keystroke with no throttling. Added a 180ms debounce so rapid typing batches into a single render.
+
+- **Corrupted backup silently overwritten** — A fixed `BACKUP_KEY` constant meant repeated corruption events overwrote the previous backup with no warning. Changed to a timestamped key (`bookmarks_corrupt_backup_${Date.now()}`) so each event is preserved separately.
+
+- **`saveEdit` validated after writing** — Validation ran after the updated object was already written into the array. If validation failed and returned early, the in-memory array was left dirty. Fixed by validating first, then writing.
