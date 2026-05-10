@@ -336,7 +336,12 @@
       : allBookmarks;
     const q = searchQuery.toLowerCase();
     const filtered = q
-      ? tagFiltered.filter(b => b.title.toLowerCase().includes(q) || (b.notes || '').toLowerCase().includes(q))
+      ? tagFiltered.filter(b =>
+          b.title.toLowerCase().includes(q) ||
+          b.url.toLowerCase().includes(q) ||
+          (b.notes || '').toLowerCase().includes(q) ||
+          (b.tags || []).some(t => t.toLowerCase().includes(q))
+        )
       : tagFiltered;
 
     if (uniqueTags.length) {
