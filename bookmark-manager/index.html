@@ -660,7 +660,7 @@
       url,
       title,
       notes: document.getElementById(`edit-notes-${id}`).value.trim(),
-      tags: document.getElementById(`edit-tags-${id}`).value.trim().split(',').map(t => t.trim().toLowerCase()).filter(t => t)
+      tags: [...new Set(document.getElementById(`edit-tags-${id}`).value.trim().split(',').map(t => t.trim().toLowerCase()).filter(t => t))]
     };
     save(bookmarks);
     render();
@@ -688,7 +688,7 @@
       return;
     }
     const notes = document.getElementById('notes').value.trim();
-    const tags = document.getElementById('tags').value.trim().split(',').map(t => t.trim().toLowerCase()).filter(t => t);
+    const tags = [...new Set(document.getElementById('tags').value.trim().split(',').map(t => t.trim().toLowerCase()).filter(t => t))];
     const bookmarks = load();
     bookmarks.unshift({ id: generateId(), url, title, notes, tags, created_at: new Date().toISOString() });
     save(bookmarks);
