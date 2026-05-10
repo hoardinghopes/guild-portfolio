@@ -197,6 +197,24 @@
     line-clamp: 3;
     overflow: hidden;
   }
+  .bookmark-note.expanded {
+    display: block;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+  }
+  .note-toggle {
+    font-size: .75rem;
+    font-weight: 500;
+    color: #3b82f6;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    margin-block-start: .2rem;
+    display: none;
+  }
+  .note-toggle.visible { display: inline; }
+  .note-toggle:hover { color: #2563eb; }
   .bookmark-tags {
     display: flex;
     flex-wrap: wrap;
@@ -454,7 +472,7 @@
         <div class="bookmark-body">
           <a class="bookmark-title" href="${escapeAttr(b.url)}" target="_blank" rel="noopener">${escapeHtml(b.title)}</a>
           <div class="bookmark-domain">${escapeHtml(domain(b.url))}</div>
-          ${b.notes ? `<div class="bookmark-note">${escapeHtml(b.notes)}</div>` : ''}
+          ${b.notes ? `<div class="bookmark-note">${escapeHtml(b.notes)}</div><button class="note-toggle" aria-expanded="false">Show more</button>` : ''}
           ${b.tags && b.tags.length ? `<div class="bookmark-tags">${b.tags.map(t => `<span class="tag filter-tag" data-filter="${escapeAttr(t)}">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
         </div>
         <div class="bookmark-actions">
@@ -490,6 +508,18 @@
     });
     list.querySelectorAll('.icon-btn.edit-btn').forEach(btn => {
       btn.addEventListener('click', () => startEdit(btn.closest('.bookmark').dataset.id));
+    });
+    list.querySelectorAll('.bookmark-note').forEach(note => {
+      const toggle = note.nextElementSibling;
+      if (!toggle || !toggle.classList.contains('note-toggle')) return;
+      if (note.scrollHeight > note.clientHeight) {
+        toggle.classList.add('visible');
+        toggle.addEventListener('click', () => {
+          const expanded = note.classList.toggle('expanded');
+          toggle.textContent = expanded ? 'Show less' : 'Show more';
+          toggle.setAttribute('aria-expanded', expanded);
+        });
+      }
     });
   }
 
