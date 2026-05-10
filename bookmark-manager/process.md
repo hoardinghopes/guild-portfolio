@@ -226,3 +226,31 @@ A third adversarial review identified issues that had been missed in the earlier
 - **Per-tag length not enforced** — The tags field had `maxlength="200"` on the input, but a single 200-character string with no commas was stored as one valid tag. The `maxlength` prevented storage overflow but did nothing to validate the shape of individual tags. Extracted tag parsing into a `parseTags()` helper used by both the add and edit paths. It splits on commas, trims, lowercases, deduplicates (via `Set`), and rejects any individual tag longer than 50 characters, alerting the user if any were dropped rather than silently discarding them.
 
 - **No cross-tab sync** — Two tabs open simultaneously would diverge: a deletion or addition in one tab was invisible in the other. A `storage` event listener was added at startup. When another tab writes to `STORAGE_KEY`, the listener reloads `allBookmarks` from storage and calls `render()`. The `storage` event only fires in tabs that did *not* make the change, so this adds no overhead to the current tab's own mutations.
+
+---
+
+## 13. Fourth adversarial review & fixes
+
+A fourth adversarial review was run after section 12's changes, producing 27 findings. The subset fixed below addresses critical correctness issues, a security gap, and code quality inconsistencies.
+
+### Critical bugs
+
+- **`timeAgo` rendered "Invalid Date" for corrupt timestamps** — If a bookmark's `created_at` was malformed (manual localStorage edit, old data, cross-browser sync), `new Date(dateStr).getTime()` returned `NaN`. All subsequent comparisons silently failed against `NaN`, and the function fell through to `toLocaleDateString()` which returned the literal string `"Invalid Date"` in the UI. Fixed by validating the `Date` object with `isNaN(date.getTime())` after construction, returning `''` for invalid dates — the same fallback as missing dates.
+
+- **`dialog.showModal()` threw on rapid double-click, leaking event listeners** — Clicking the delete button twice before the dialog appeared caused `showModal()` to throw `InvalidStateError`, but only after `addEventListener` had already run. The new listeners were never removed, and subsequent calls stacked more. Fixed by guarding with `if (dialog.open) return;` at the top of `confirmDelete`.
+
+- **No `CSS.escape()` fallback in `startEdit`** — `startEdit` used `CSS.escape(id)` directly with no fallback for older browsers (IE11, Safari < 10). The `generateId()` function already had a fallback for `crypto.randomUUID()`, but `startEdit` did not. Added a `cssEscape()` helper that delegates to `CSS.escape()` when available and falls back to escaping all CSS-special characters with backslash.
+
+### Data integrity
+
+- **`save()` showed misleading error for non-quota failures** — The catch block in `save()` assumed every failure was `QuotaExceededError`. A `SecurityError` (disabled storage, sandboxed iframe) displayed "browser storage is full". Fixed by checking `e.name`: quota errors show the full-storage message; everything else shows "browser storage is not available".
+
+- **`allBookmarks` mutation strategy was inconsistent** — Add used `.unshift()` (mutating), edit used indexed assignment (mutating), delete used `.filter()` (reassigning). Three operations, three patterns. All three now use reassignment: add uses spread `[{...}, ...allBookmarks]`, edit uses `.map()`, delete continues using `.filter()`. No mutation of the module-level array.
+
+### Code quality
+
+- **Validation duplicated across add and edit paths** — Both the add submit handler and `saveEdit` independently checked for empty fields, called `isSafeUrl()`, and showed alerts. Extracted a `validateBookmark(url, title)` function used by both paths. The add handler also now alerts on empty fields instead of silently returning — an inconsistency between the two paths that was fixed as part of the consolidation.
+
+- **`escapeAttr` didn't escape single quotes** — Only escaped `&` and `"`. A tag like `it's` was technically valid in double-quoted attributes but would break if attribute quoting style ever changed. Added `.replace(/'/g, '&#39;')`.
+
+- **`confirmDelete` Escape handler already restored focus** — Issue #27 flagged that the Escape handler didn't return focus to `trigger`. On inspection, the code already had `if (trigger) trigger.focus()` in the `handleKey` function from a prior fix. No change was needed.
