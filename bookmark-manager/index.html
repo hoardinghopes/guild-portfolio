@@ -488,7 +488,9 @@
 
   function timeAgo(dateStr) {
     if (!dateStr) return '';
-    const diff = Date.now() - new Date(dateStr).getTime();
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
+    const diff = Date.now() - date.getTime();
     if (diff < 0) return 'just now';
     const s = Math.floor(diff / 1000);
     const m = Math.floor(s / 60);
@@ -501,7 +503,6 @@
     if (d === 1) return 'yesterday';
     if (d < 7) return `${d}d ago`;
     if (w < 5) return `${w}w ago`;
-    const date = new Date(dateStr);
     const now = new Date();
     if (date.getFullYear() === now.getFullYear()) {
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
