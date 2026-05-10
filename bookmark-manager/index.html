@@ -190,6 +190,14 @@
     color: #555;
     margin-block-start: .125rem;
   }
+  .bookmark-url {
+    font-size: .6875rem;
+    color: #444;
+    margin-block-start: .05rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .bookmark-time {
     font-size: .6875rem;
     color: #444;
@@ -526,6 +534,7 @@
         <div class="bookmark-body">
           <a class="bookmark-title" href="${escapeAttr(b.url)}" target="_blank" rel="noopener">${escapeHtml(b.title)}</a>
           <div class="bookmark-domain">${escapeHtml(domain(b.url))}</div>
+          <div class="bookmark-url">${escapeHtml(b.url)}</div>
           ${b.notes ? `<div class="bookmark-note">${escapeHtml(b.notes)}</div><button class="note-toggle" aria-expanded="false">Show more</button>` : ''}
           ${b.tags && b.tags.length ? `<div class="bookmark-tags">${b.tags.map(t => `<span class="tag filter-tag" data-filter="${escapeAttr(t)}">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
           ${b.created_at ? `<div class="bookmark-time">${timeAgo(b.created_at)}</div>` : ''}
@@ -558,7 +567,7 @@
           const prev = btn.innerHTML;
           btn.innerHTML = '&#10003;';
           setTimeout(() => { btn.innerHTML = prev; }, 1500);
-        });
+        }).catch(() => { btn.title = 'Copy failed'; });
       });
     });
     list.querySelectorAll('.icon-btn.edit-btn').forEach(btn => {
@@ -638,7 +647,7 @@
   function saveEdit(id) {
     const url = document.getElementById(`edit-url-${id}`).value.trim();
     const title = document.getElementById(`edit-title-${id}`).value.trim();
-    if (!url || !title) return;
+    if (!url || !title) { alert('URL and title are required.'); return; }
     if (!isSafeUrl(url)) {
       alert('URL must start with http:// or https://');
       return;
@@ -692,6 +701,7 @@
     formToggle.classList.remove('open');
     formToggle.setAttribute('aria-expanded', 'false');
     searchQuery = '';
+    currentFilter = '';
     document.getElementById('search').value = '';
     render();
   });
