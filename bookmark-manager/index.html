@@ -538,6 +538,16 @@
       filterBar.innerHTML = '';
     }
 
+    if (currentFilter && q) {
+      document.title = `Bookmarks — ${currentFilter} · "${searchQuery}"`;
+    } else if (currentFilter) {
+      document.title = `Bookmarks — ${currentFilter}`;
+    } else if (q) {
+      document.title = `Bookmarks — "${searchQuery}"`;
+    } else {
+      document.title = 'Bookmarks';
+    }
+
     if (filtered.length === 0) {
       if (allBookmarks.length === 0) {
         list.innerHTML = '<div class="empty">No bookmarks yet</div>';
