@@ -166,6 +166,9 @@
     gap: .75rem;
     animation: fadeIn .2s ease both;
   }
+  @media (prefers-reduced-motion: reduce) {
+    .bookmark { animation: none; }
+  }
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(4px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -309,6 +312,17 @@
     padding-inline: 0;
     font-size: .875rem;
   }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
 
   /* --- Confirm dialog --- */
   #confirmDialog {
@@ -367,9 +381,11 @@
     </div>
   </form>
 
+  <label for="search" class="sr-only">Search bookmarks</label>
   <input type="text" id="search" placeholder="Search bookmarks..." autocomplete="off">
-  <div class="filter-bar" id="filterBar"></div>
-  <div id="list"></div>
+  <div class="filter-bar" id="filterBar" role="group" aria-label="Filter by tag"></div>
+  <div id="list" role="status" aria-live="polite" aria-atomic="false"></div>
+  <div id="resultAnnounce" class="sr-only" aria-live="polite"></div>
 </div>
 
 <dialog id="confirmDialog" aria-labelledby="confirmMsg">
@@ -463,6 +479,7 @@
     const allBookmarks = load();
     const list = document.getElementById('list');
     const filterBar = document.getElementById('filterBar');
+    const announce = document.getElementById('resultAnnounce');
 
     const uniqueTags = [...new Set(allBookmarks.flatMap(b => b.tags || []))].sort();
     const tagFiltered = currentFilter
@@ -491,12 +508,16 @@
     if (filtered.length === 0) {
       if (allBookmarks.length === 0) {
         list.innerHTML = '<div class="empty">No bookmarks yet</div>';
+        if (announce) announce.textContent = 'No bookmarks';
       } else if (currentFilter && !q) {
         list.innerHTML = '<div class="empty">No bookmarks with this tag</div>';
+        if (announce) announce.textContent = 'No bookmarks with this tag';
       } else if (q && !currentFilter) {
         list.innerHTML = '<div class="empty">No bookmarks match your search</div>';
+        if (announce) announce.textContent = 'No bookmarks match your search';
       } else {
         list.innerHTML = '<div class="empty">No bookmarks match your search or tag filter</div>';
+        if (announce) announce.textContent = 'No matching bookmarks';
       }
       return;
     }
@@ -555,6 +576,12 @@
         });
       }
     });
+    if (announce) {
+      let msg = `${filtered.length} bookmark${filtered.length === 1 ? '' : 's'}`;
+      if (currentFilter) msg += ` tagged "${currentFilter}"`;
+      if (q) msg += ` matching "${searchQuery}"`;
+      announce.textContent = msg;
+    }
   }
 
   function escapeHtml(s) {
