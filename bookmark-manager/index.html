@@ -402,6 +402,7 @@
 
 <script>
   const STORAGE_KEY = 'bookmarks';
+  const BACKUP_KEY = 'bookmarks_corrupt_backup';
   let currentFilter = '';
   let searchQuery = '';
   let _idCounter = 0;
@@ -439,8 +440,18 @@
   }
 
   function load() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-    catch { return []; }
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw === null) return [];
+    try {
+      const data = JSON.parse(raw);
+      if (!Array.isArray(data)) throw new Error('data is not an array');
+      return data;
+    } catch (e) {
+      try { localStorage.setItem(BACKUP_KEY, raw); } catch {}
+      console.warn('Bookmarks data corrupted. A backup was saved under "bookmarks_corrupt_backup".', e.message);
+      alert('Your bookmarks file appears to be corrupted. A backup was saved so the data can be recovered. The app will start fresh.');
+      return [];
+    }
   }
 
   function save(bookmarks) {
