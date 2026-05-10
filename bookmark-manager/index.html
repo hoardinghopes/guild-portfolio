@@ -438,7 +438,15 @@
     }
 
     if (filtered.length === 0) {
-      list.innerHTML = '<div class="empty">No bookmarks yet</div>';
+      if (allBookmarks.length === 0) {
+        list.innerHTML = '<div class="empty">No bookmarks yet</div>';
+      } else if (currentFilter && !q) {
+        list.innerHTML = '<div class="empty">No bookmarks with this tag</div>';
+      } else if (q && !currentFilter) {
+        list.innerHTML = '<div class="empty">No bookmarks match your search</div>';
+      } else {
+        list.innerHTML = '<div class="empty">No bookmarks match your search or tag filter</div>';
+      }
       return;
     }
     list.innerHTML = filtered.map(b => `
