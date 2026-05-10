@@ -149,7 +149,7 @@ After the first review fixes (from Claude) were implemented, I asked for an adve
 
 - **`isSafeUrl` accepted credentials in URLs** — `https://user:pass@evil.com` passed validation, leaking credentials into the DOM. Now checks `parsed.username` and `parsed.password` and rejects them (`index.html:605`).
 
-- **No Content Security Policy** — Added a CSP meta tag blocking everything except the inline styles and scripts the app needs. Prevents XSS in any future feature (`index.html:6`).
+- **No Content Security Policy** — Added a CSP meta tag (`index.html:6`). It blocks external script and style sources, external connections (`connect-src 'none'`), form hijacking (`form-action 'none'`), and base tag injection (`base-uri 'none'`). However, because this is a single-file app with inline `<script>` and `<style>` blocks, both directives require `'unsafe-inline'`, which means the CSP does **not** block injected inline scripts. It is not an XSS defence. The real XSS protection here is `escapeHtml`/`escapeAttr` applied to all user-generated content before it touches the DOM. A hash-based CSP (`'sha256-...'`) would replace `'unsafe-inline'` and actually block injected scripts, but requires recomputing the hash after every edit to the script or style block — too much friction for a single-file project without a build step.
 
 ### Accessibility
 
