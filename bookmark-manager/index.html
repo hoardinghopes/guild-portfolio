@@ -412,14 +412,17 @@
     catch { return `${Date.now()}-${++_idCounter}`; }
   }
 
-  function confirmDelete(onConfirm) {
+  function confirmDelete(title, onConfirm) {
     const dialog = document.getElementById('confirmDialog');
+    const msg = document.getElementById('confirmMsg');
+    msg.textContent = `Delete "${title}"?`;
     const okBtn = document.getElementById('confirmOk');
     const cancelBtn = document.getElementById('confirmCancel');
     let trigger = document.activeElement;
 
     function cleanup() {
       dialog.close();
+      msg.textContent = 'Delete this bookmark?';
       okBtn.removeEventListener('click', handleOk);
       cancelBtn.removeEventListener('click', handleCancel);
       dialog.removeEventListener('keydown', handleKey);
@@ -561,7 +564,9 @@
     list.querySelectorAll('.icon-btn.delete-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.closest('.bookmark').dataset.id;
-        confirmDelete(() => {
+        const bookmark = allBookmarks.find(b => b.id === id);
+        const title = bookmark ? bookmark.title : 'this bookmark';
+        confirmDelete(title, () => {
           save(allBookmarks.filter(b => b.id !== id));
           render();
         });
