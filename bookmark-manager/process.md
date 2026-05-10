@@ -202,3 +202,27 @@ A second adversarial review was run after section 10's fixes were applied. Key c
 - **Corrupted backup silently overwritten** — A fixed `BACKUP_KEY` constant meant repeated corruption events overwrote the previous backup with no warning. Changed to a timestamped key (`bookmarks_corrupt_backup_${Date.now()}`) so each event is preserved separately.
 
 - **`saveEdit` validated after writing** — Validation ran after the updated object was already written into the array. If validation failed and returned early, the in-memory array was left dirty. Fixed by validating first, then writing.
+
+---
+
+## 12. Third review & fixes
+
+A third adversarial review identified issues that had been missed in the earlier passes.
+
+### UX and accessibility
+
+- **Delete dialog didn't name the bookmark** — The confirmation message was the static string "Delete this bookmark?". A keyboard user who tabbed into the dialog had no way to know which bookmark they were about to delete. `confirmDelete` now accepts a `title` argument and sets the dialog text to `Delete "${title}"?`, falling back to `"this bookmark"` if the ID can't be resolved. The message is reset to the neutral fallback in `cleanup()` so it's never stale.
+
+- **Delete confirm button used primary blue styling** — The "Delete" button in the confirmation dialog shared the same `btn-primary` blue style as "Save Bookmark". Destructive actions should be visually distinct. Added a `btn-danger` class with a dark red background (`#991b1b`, ~8.3:1 contrast with white — WCAG AAA) and a darker hover state (`#7f1d1d`, ~10:1).
+
+- **No landmark structure** — The page had no ARIA landmark elements. Three changes were made: (1) the outer `<div class="container">` was changed to `<main class="container">` so screen reader users can jump directly to content; (2) the add-bookmark `<form>` was given `aria-label="Add bookmark"`, promoting it from a generic container to a named form landmark; (3) the search input and filter bar were wrapped in a `<search>` element (HTML 5.3, broadly supported since late 2023), giving the filtering area its own landmark. Without these, every screen reader user had to tab through the entire page from the top on every visit.
+
+### Page title
+
+- **`document.title` never reflected active state** — The browser tab always read "Bookmarks" regardless of any active filter or search. `render()` now updates `document.title` on every call, before the early-return path, so it is always accurate: `Bookmarks — css` when a tag filter is active, `Bookmarks — "flexbox"` when searching, `Bookmarks — css · "flexbox"` when both are active, and plain `Bookmarks` when neither is.
+
+### Data integrity
+
+- **Per-tag length not enforced** — The tags field had `maxlength="200"` on the input, but a single 200-character string with no commas was stored as one valid tag. The `maxlength` prevented storage overflow but did nothing to validate the shape of individual tags. Extracted tag parsing into a `parseTags()` helper used by both the add and edit paths. It splits on commas, trims, lowercases, deduplicates (via `Set`), and rejects any individual tag longer than 50 characters, alerting the user if any were dropped rather than silently discarding them.
+
+- **No cross-tab sync** — Two tabs open simultaneously would diverge: a deletion or addition in one tab was invisible in the other. A `storage` event listener was added at startup. When another tab writes to `STORAGE_KEY`, the listener reloads `allBookmarks` from storage and calls `render()`. The `storage` event only fires in tabs that did *not* make the change, so this adds no overhead to the current tab's own mutations.
