@@ -717,14 +717,16 @@
     }
     const idx = allBookmarks.findIndex(b => b.id === id);
     if (idx === -1) return;
-    allBookmarks[idx] = {
-      id,
-      created_at: allBookmarks[idx].created_at,
-      url,
-      title,
-      notes: document.getElementById(`edit-notes-${id}`).value.trim(),
-      tags: parseTags(document.getElementById(`edit-tags-${id}`).value)
-    };
+    allBookmarks = allBookmarks.map(b => b.id === id
+      ? {
+          id,
+          created_at: b.created_at,
+          url,
+          title,
+          notes: document.getElementById(`edit-notes-${id}`).value.trim(),
+          tags: parseTags(document.getElementById(`edit-tags-${id}`).value)
+        }
+      : b);
     save(allBookmarks);
     render();
   }
@@ -752,7 +754,7 @@
     }
     const notes = document.getElementById('notes').value.trim();
     const tags = parseTags(document.getElementById('tags').value);
-    allBookmarks.unshift({ id: generateId(), url, title, notes, tags, created_at: new Date().toISOString() });
+    allBookmarks = [{ id: generateId(), url, title, notes, tags, created_at: new Date().toISOString() }, ...allBookmarks];
     save(allBookmarks);
     document.getElementById('form').reset();
     form.classList.remove('open');
