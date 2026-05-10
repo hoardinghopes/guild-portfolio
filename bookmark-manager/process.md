@@ -4,6 +4,12 @@
 
 A record of how this project was built: the decisions made, problems hit, and things learned along the way.
 
+## AI agents
+
+I have 2 AI overlords: 
+- Claude Code (in VSCodium) using Sonnet 4.6 
+- Big Pickle Opencode Zen.
+
 ---
 
 ## 1. Design phase
@@ -120,3 +126,63 @@ After the initial build I asked Claude to do a full code review and work through
 - **Schema versioning from day one.** The `b.notes` TypeError happened because I added a field mid-project with no migration. Even for localStorage data, a version field and a migration step at startup would prevent this class of bug.
 - **Validate earlier.** I wrote the data path before thinking about what invalid data looks like. The `javascript:` URI issue and the unguarded `b.notes` both stem from not thinking about bad input upfront.
 - **Commit more granularly.** The initial build was one large file before I started using git. Smaller, more frequent commits would make it easier to bisect bugs.
+
+---
+
+## 10. Adversarial review & fixes
+
+After the first review fixes (from Claude) were implemented, I asked for an adversarial review from Opencode. Here's what was fixed and why.
+
+### Critical bugs
+
+- **`crypto.randomUUID()` crashes on Chrome via `file://`** — `file://` is not a secure context in Chrome, so `crypto.randomUUID()` throws. Added `generateId()` that tries `crypto.randomUUID()` first and falls back to `Date.now()-counter` (`index.html:383-386`).
+
+- **Empty-state message lied** — "No bookmarks yet" was shown even when bookmarks existed but none matched the active search or tag filter. Changed to three distinct messages: "No bookmarks yet" (truly empty), "No bookmarks with this tag" (filter active), "No bookmarks match your search" (search active), and a combined variant (`index.html:508-521`).
+
+- **Notes could not be expanded** — The spec said "(truncated, expandable)" but there was no expand mechanism. Added a "Show more" / "Show less" toggle that appears only when notes actually overflow 3 lines (`index.html:199-212`, `index.html:576-585`).
+
+- **Dialog focus targeted a deleted DOM node** — `confirmDelete` returned focus to the delete button, then `render()` destroyed it. On confirm, focus now goes to the next bookmark's delete button or the form toggle. On cancel, focus returns to the original trigger (`index.html:426-433`).
+
+- **`created_at` stored but never displayed** — Timestamps were in the data model and wireframe but absent from the UI. Added a `timeAgo()` function showing relative time ("2h ago", "yesterday") and a date fallback for older entries. Missing `created_at` on old bookmarks is handled gracefully (`index.html:188-192`, `index.html:436-484`, `index.html:541`).
+
+### Security
+
+- **`isSafeUrl` accepted credentials in URLs** — `https://user:pass@evil.com` passed validation, leaking credentials into the DOM. Now checks `parsed.username` and `parsed.password` and rejects them (`index.html:605`).
+
+- **No Content Security Policy** — Added a CSP meta tag blocking everything except the inline styles and scripts the app needs. Prevents XSS in any future feature (`index.html:6`).
+
+### Accessibility
+
+- **Search input had no label** — Added a visually-hidden `<label for="search">` with `.sr-only` utility class (`index.html:300-310`, `index.html:370`).
+
+- **No `aria-live` region** — List updates were silent for screen readers. Added `role="status"` on the list and a separate live region updated with result summaries (`index.html:373-374`, `index.html:579-584`).
+
+- **Animation ignored `prefers-reduced-motion`** — Disabled the fadeIn animation for users who prefer reduced motion (`index.html:169-171`).
+
+- **Filter-bar buttons had no grouping role** — Added `role="group" aria-label="Filter by tag"` (`index.html:372`).
+
+### UX
+
+- **Full URL never shown** — Only the domain was displayed. Added the full URL in a truncated, muted line below the domain (`index.html:188-193`, `index.html:533`).
+
+- **Silent failure on empty edit fields** — `saveEdit` returned silently when URL or title was missing. Now shows an alert (`index.html:643`).
+
+- **Clipboard failure was silent** — Added a `.catch()` that sets the button title to "Copy failed" (`index.html:562`).
+
+- **Inconsistent filter/search clearing after form submit** — `searchQuery` was cleared but `currentFilter` was not, leaving new bookmarks invisible. Both are now cleared (`index.html:700-701`).
+
+### Code quality
+
+- **`load()` called N times per render cycle** — The delete, copy, and edit handlers each re-read localStorage. Changed all to reference the `allBookmarks` captured from the single `load()` call in `render()`. `startEdit` now accepts a bookmark object instead of calling `load()` (`index.html:552-575`, `index.html:614`).
+
+- **Redundant `.form-body` toggle** — Removed the `<div class="form-body">` wrapper, its CSS, and all JS references. Visibility is now controlled solely by `.form-card.open` (`index.html:67-68`, `index.html:368-387`, `index.html:671-676`, `index.html:696-697`).
+
+- **No `type="button"` on icon buttons** — Copy, edit, and delete buttons now explicitly set `type="button"` to prevent accidental form submission (`index.html:543-545`).
+
+- **`class="delete"` fragile naming** — Renamed to `delete-btn` in both CSS and JS selectors (`index.html:276`, `index.html:433`, `index.html:545`, `index.html:549`).
+
+### Edge cases
+
+- **Duplicate tags stored** — `"css, css"` produced `["css", "css"]`, skewing badge display. Wrapped both tag inputs in `[...new Set(...)]` to deduplicate (`index.html:663`, `index.html:691`).
+
+- **Data corruption silently reset** — Corrupted localStorage returned `[]` with no notification. Now backs up the raw string to a second key, alerts the user, and logs details to console (`index.html:404-405`, `index.html:441-455`).
