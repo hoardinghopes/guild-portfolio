@@ -64,8 +64,6 @@
     transition: transform .2s;
   }
   .form-toggle.open .plus { transform: rotate(45deg); }
-  .form-body { display: none; }
-  .form-body.open { display: block; }
   .form-card.open { display: block; }
   .form-row { margin-block-end: .75rem; }
   label {
@@ -273,7 +271,7 @@
     transition: color .15s;
   }
   .icon-btn:hover { color: #e1e1e3; }
-  .icon-btn.delete:hover { color: #f87171; }
+  .icon-btn.delete-btn:hover { color: #f87171; }
 
   /* --- Edit form --- */
   .edit-form { width: 100%; }
@@ -368,7 +366,6 @@
   </button>
 
   <form class="form-card" id="form">
-    <div class="form-body" id="formBody">
       <div class="form-row">
         <label for="url">URL</label>
         <input type="url" id="url" placeholder="https://" required maxlength="2048">
@@ -386,7 +383,6 @@
         <input type="text" id="tags" placeholder="css, layout, tutorial" maxlength="200">
       </div>
       <button class="btn-primary" type="submit">Save</button>
-    </div>
   </form>
 
   <label for="search" class="sr-only">Search bookmarks</label>
@@ -430,7 +426,7 @@
     function handleOk() {
       cleanup();
       onConfirm();
-      const firstDelete = document.querySelector('.bookmark .icon-btn.delete');
+      const firstDelete = document.querySelector('.bookmark .icon-btn.delete-btn');
       (firstDelete || document.getElementById('formToggle')).focus();
     }
     function handleCancel() { cleanup(); if (trigger) trigger.focus(); }
@@ -540,16 +536,16 @@
           ${b.created_at ? `<div class="bookmark-time">${timeAgo(b.created_at)}</div>` : ''}
         </div>
         <div class="bookmark-actions">
-          <button class="icon-btn copy-btn" title="Copy URL" aria-label="Copy URL">&#10697;</button>
-          <button class="icon-btn edit-btn" title="Edit" aria-label="Edit bookmark">&#9998;</button>
-          <button class="icon-btn delete" title="Delete" aria-label="Delete bookmark">&times;</button>
+          <button class="icon-btn copy-btn" type="button" title="Copy URL" aria-label="Copy URL">&#10697;</button>
+          <button class="icon-btn edit-btn" type="button" title="Edit" aria-label="Edit bookmark">&#9998;</button>
+          <button class="icon-btn delete-btn" type="button" title="Delete" aria-label="Delete bookmark">&times;</button>
         </div>
       </div>
     `).join('');
     list.querySelectorAll('.filter-tag').forEach(el => {
       el.addEventListener('click', () => { currentFilter = currentFilter === el.dataset.filter ? '' : el.dataset.filter; render(); });
     });
-    list.querySelectorAll('.icon-btn.delete').forEach(btn => {
+    list.querySelectorAll('.icon-btn.delete-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.closest('.bookmark').dataset.id;
         confirmDelete(() => {
@@ -672,12 +668,10 @@
 
   /* --- Form collapse --- */
   const formToggle = document.getElementById('formToggle');
-  const formBody = document.getElementById('formBody');
   const f = document.getElementById('form');
   formToggle.addEventListener('click', () => {
     const opening = !f.classList.contains('open');
     f.classList.toggle('open');
-    formBody.classList.toggle('open');
     formToggle.classList.toggle('open');
     formToggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
     if (opening) document.getElementById('url').focus();
@@ -699,7 +693,6 @@
     bookmarks.unshift({ id: generateId(), url, title, notes, tags, created_at: new Date().toISOString() });
     save(bookmarks);
     document.getElementById('form').reset();
-    formBody.classList.remove('open');
     f.classList.remove('open');
     formToggle.classList.remove('open');
     formToggle.setAttribute('aria-expanded', 'false');
