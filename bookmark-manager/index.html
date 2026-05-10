@@ -701,10 +701,10 @@
 
   /* --- Form collapse --- */
   const formToggle = document.getElementById('formToggle');
-  const f = document.getElementById('form');
+  const form = document.getElementById('form');
   formToggle.addEventListener('click', () => {
     const opening = !f.classList.contains('open');
-    f.classList.toggle('open');
+    form.classList.toggle('open');
     formToggle.classList.toggle('open');
     formToggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
     if (opening) document.getElementById('url').focus();
