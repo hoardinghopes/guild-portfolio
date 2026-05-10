@@ -431,7 +431,7 @@
       (firstDelete || document.getElementById('formToggle')).focus();
     }
     function handleCancel() { cleanup(); if (trigger) trigger.focus(); }
-    function handleKey(e) { if (e.key === 'Escape') { e.preventDefault(); cleanup(); } }
+    function handleKey(e) { if (e.key === 'Escape') { e.preventDefault(); cleanup(); if (trigger) trigger.focus(); } }
 
     okBtn.addEventListener('click', handleOk);
     cancelBtn.addEventListener('click', handleCancel);
