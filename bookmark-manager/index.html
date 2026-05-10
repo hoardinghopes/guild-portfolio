@@ -562,7 +562,7 @@
             : `<span class="bookmark-title">${escapeHtml(b.title)}</span>`}
           <div class="bookmark-domain">${escapeHtml(domain(b.url))}</div>
           <div class="bookmark-url">${escapeHtml(b.url)}</div>
-          ${b.notes ? `<div class="bookmark-note">${escapeHtml(b.notes)}</div><button class="note-toggle" aria-expanded="false">Show more</button>` : ''}
+          ${b.notes ? `<div class="bookmark-note">${escapeHtml(b.notes)}</div><button type="button" class="note-toggle" aria-expanded="false">Show more</button>` : ''}
           ${b.tags && b.tags.length ? `<div class="bookmark-tags">${b.tags.map(t => `<button type="button" class="tag filter-tag" data-filter="${escapeAttr(t)}">${escapeHtml(t)}</button>`).join('')}</div>` : ''}
           ${b.created_at ? `<div class="bookmark-time">${timeAgo(b.created_at)}</div>` : ''}
         </div>
